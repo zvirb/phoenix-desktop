@@ -246,6 +246,27 @@ def main():
         manager.setup_wizard()
         sys.exit(0)
     
+    # Check if initial setup is needed
+    from setup_wizard import needs_setup, run_wizard
+    if needs_setup():
+        print()
+        print("=" * 70)
+        print("  First-time setup required")
+        print("=" * 70)
+        print()
+        if not run_wizard():
+            print("\n❌ Setup was cancelled or failed. Please run 'python setup_wizard.py' to try again.")
+            sys.exit(1)
+        
+        print("\n" + "=" * 70)
+        print("  Setup complete! Starting tracker...")
+        print("=" * 70 + "\n")
+        
+        # Reload config after setup
+        from importlib import reload
+        import config as config_module
+        reload(config_module)
+    
     # Run the tracker
     tracker = DesktopTracker()
     tracker.run()
