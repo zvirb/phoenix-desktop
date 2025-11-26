@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment & Config
+.env
+*.local
+
+# Logs
+*.log
+logs/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Phoenix Tracker Specific
+.phoenix_token.enc
+.phoenix_key
+phoenix_tracker.log
+service_output.log
+service_error.log
+
+# Screenshots (if any are saved locally)
+screenshots/
+*.jpg
+*.jpeg
+*.png
