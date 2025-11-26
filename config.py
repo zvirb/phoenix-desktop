@@ -1,48 +1,88 @@
 """
 Configuration management for Phoenix Desktop Tracker.
-Loads settings from environment variables and .env file.
+Now loads settings from Windows Registry via WindowsSettingsManager.
 """
 import os
+import socket
 from typing import List
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
+from windows_settings import settings_manager
 
 class Config:
-    """Application configuration."""
+    """Application configuration loaded from Windows Registry."""
     
-    # API Settings
-    PHOENIX_API_URL: str = os.getenv('PHOENIX_API_URL', 'https://localhost:8000')
-    DEVICE_ID: str = os.getenv('DEVICE_ID', f'workstation-{os.getenv("COMPUTERNAME", "unknown")}')
+    @property
+    def PHOENIX_API_URL(self) -> str:
+        """Get Phoenix API URL from Windows settings."""
+        url = settings_manager.get_phoenix_url()
+        if not url:
+            # Fallback to localhost for development
+            return os.getenv('PHOENIX_API_URL', 'https://localhost:8000')
+        return url
     
-    # Capture Settings
-    CAPTURE_INTERVAL: int = int(os.getenv('CAPTURE_INTERVAL', '60'))
-    HEARTBEAT_INTERVAL: int = int(os.getenv('HEARTBEAT_INTERVAL', '60'))
-    SIMILARITY_THRESHOLD: float = float(os.getenv('SIMILARITY_THRESHOLD', '0.95'))
+    @property
+    def DEVICE_ID(self) -> str:
+        """Get Device ID from Windows settings."""
+        device_id = settings_manager.get_device_id()
+        if not device_id:
+            # Generate default
+            hostname = socket.gethostname().lower()
+            hostname = ''.join(c if c.isalnum() or c == '-' else '-' for c in hostname)
+            return f'desktop-{hostname}'
+        return device_id
     
-    # Gaming Process Blacklist
-    GAMING_PROCESSES: List[str] = [
-        p.strip().lower() 
-        for p in os.getenv(
-            'GAMING_PROCESSES', 
-            'steam.exe,steamwebhelper.exe,dota2.exe,csgo.exe,cyberpunk2077.exe,valorant.exe'
-        ).split(',')
-    ]
+    @property
+    def CAPTURE_INTERVAL(self) -> int:
+        """Get capture interval in seconds."""
+        return settings_manager.get_capture_interval()
     
-    # Performance Settings
-    MAX_IMAGE_WIDTH: int = int(os.getenv('MAX_IMAGE_WIDTH', '1024'))
-    JPEG_QUALITY: int = int(os.getenv('JPEG_QUALITY', '70'))
+    @property
+    def HEARTBEAT_INTERVAL(self) -> int:
+        """Get heartbeat interval in seconds."""
+        return settings_manager.get_heartbeat_interval()
     
-    # Security Settings
-    VERIFY_SSL: bool = os.getenv('VERIFY_SSL', 'true').lower() == 'true'
-    REQUEST_TIMEOUT: int = int(os.getenv('REQUEST_TIMEOUT', '30'))
+    @property
+    def SIMILARITY_THRESHOLD(self) -> float:
+        """Get similarity threshold (0-1)."""
+        return settings_manager.get_similarity_threshold()
     
-    # Logging
-    LOG_LEVEL: str = os.getenv('LOG_LEVEL', 'INFO')
+    @property
+    def GAMING_PROCESSES(self) -> List[str]:
+        """Get gaming process blacklist."""
+        processes = settings_manager.get_setting(
+            'gaming_processes',
+            ['steam.exe', 'steamwebhelper.exe', 'dota2.exe', 'csgo.exe', 
+             'cyberpunk2077.exe', 'valorant.exe']
+        )
+        if isinstance(processes, str):
+            # If stored as comma-separated string
+            return [p.strip().lower() for p in processes.split(',')]
+        return [p.lower() for p in processes]
     
-    # API Endpoints
+    @property
+    def MAX_IMAGE_WIDTH(self) -> int:
+        """Get max image width in pixels."""
+        return settings_manager.get_setting('max_image_width', 1024)
+    
+    @property
+    def JPEG_QUALITY(self) -> int:
+        """Get JPEG quality (1-100)."""
+        return settings_manager.get_setting('jpeg_quality', 70)
+    
+    @property
+    def VERIFY_SSL(self) -> bool:
+        """Get SSL verification preference."""
+        return settings_manager.get_verify_ssl()
+    
+    @property
+    def REQUEST_TIMEOUT(self) -> int:
+        """Get request timeout in seconds."""
+        return settings_manager.get_setting('request_timeout', 30)
+    
+    @property
+    def LOG_LEVEL(self) -> str:
+        """Get log level."""
+        return settings_manager.get_log_level()
+    
     @property
     def heartbeat_url(self) -> str:
         """Get the heartbeat API endpoint."""
@@ -56,10 +96,10 @@ class Config:
     def validate(self) -> None:
         """Validate configuration settings."""
         if not self.PHOENIX_API_URL:
-            raise ValueError("PHOENIX_API_URL must be set")
+            raise ValueError("PHOENIX_API_URL must be set in Windows Settings")
         
-        if not self.PHOENIX_API_URL.startswith('https://'):
-            raise ValueError("PHOENIX_API_URL must use HTTPS protocol")
+        if not self.PHOENIX_API_URL.startswith('https://') and 'localhost' not in self.PHOENIX_API_URL:
+            raise ValueError("PHOENIX_API_URL must use HTTPS protocol (or localhost for testing)")
         
         if self.CAPTURE_INTERVAL < 10:
             raise ValueError("CAPTURE_INTERVAL must be at least 10 seconds")
