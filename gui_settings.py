@@ -41,7 +41,7 @@ class ModernSettingsWindow:
         # Windows 11 2025 Fluent Design Colors
         self.colors = {
             'bg_primary': '#F3F3F3',        # Light gray background
-            'bg_secondary': '#FAFAFA',' # Slightly lighter
+            'bg_secondary': '#FAFAFA',      # Slightly lighter
             'card': '#FFFFFF',              # White cards
             'accent': '#0078D4',            # Windows blue
             'accent_hover': '#106EBE',      # Darker blue on hover

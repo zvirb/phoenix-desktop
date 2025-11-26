@@ -18,7 +18,7 @@ from tkinter import messagebox
 sys.path.insert(0, str(Path(__file__).parent))
 
 from windows_settings import settings_manager
-from gui_settings import SettingsWindow
+from gui_settings import ModernSettingsWindow
 from token_manager import TokenManager
 from api_client import create_client
 from window_detector import WindowDetector
@@ -121,7 +121,7 @@ class PhoenixTrayApp:
     def open_settings(self, icon=None, item=None):
         """Open the settings window."""
         def callback():
-            settings = SettingsWindow(on_save=self.on_settings_saved)
+            settings = ModernSettingsWindow(on_save=self.on_settings_saved)
             settings.show()
         
         # Run in main thread for GUI
