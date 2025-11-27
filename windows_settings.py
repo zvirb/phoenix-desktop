@@ -48,7 +48,8 @@ class WindowsSettingsManager:
             
             # Convert value based on type
             if isinstance(value, bool):
-                winreg.SetValueEx(key, name, 0, winreg.REG_DWORD, int(value))
+                # Store booleans as string to preserve type on retrieval
+                winreg.SetValueEx(key, name, 0, winreg.REG_SZ, str(value))
             elif isinstance(value, int):
                 winreg.SetValueEx(key, name, 0, winreg.REG_DWORD, value)
             elif isinstance(value, str):
@@ -94,11 +95,16 @@ class WindowsSettingsManager:
             # Try to parse JSON for complex types
             if value_type == winreg.REG_SZ and isinstance(value, str):
                 try:
-                    value = json.loads(value)
+                    # Handle plain boolean strings
+                    if value == "True":
+                        return True
+                    if value == "False":
+                        return False
+                        
+                    return json.loads(value)
                 except (json.JSONDecodeError, TypeError):
-                    pass
-
-            logger.debug(f"Retrieved setting: {name}")
+                    return value
+            
             return value
 
         except FileNotFoundError:
