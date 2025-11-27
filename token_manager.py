@@ -40,7 +40,7 @@ class TokenManager:
             key_file.write_bytes(self.encryption_key)
             key_file.chmod(0o600)  # Read/write for owner only
     
-    def store_token(self, token: str) -> None:
+    def save_token(self, token: str) -> None:
         """
         Store the authentication token securely.
         
@@ -170,7 +170,7 @@ class TokenManager:
             return False
         
         try:
-            self.store_token(token)
+            self.save_token(token)
             print("✅ Token stored securely!")
             return True
         except Exception as e:

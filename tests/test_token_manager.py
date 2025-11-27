@@ -38,7 +38,7 @@ class TestTokenManager:
 
         manager = TokenManager()
         # store_token returns None, not a boolean
-        manager.store_token("test_token_12345")
+        manager.save_token("test_token_12345")
 
         mock_cred.CredWrite.assert_called_once()
 
@@ -146,7 +146,7 @@ class TestTokenSecurity:
         from token_manager import TokenManager
 
         manager = TokenManager()
-        manager.store_token("my_token")
+        manager.save_token("my_token")
 
         # Verify CredWrite was called
         call_args = mock_cred.CredWrite.call_args
