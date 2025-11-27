@@ -38,6 +38,8 @@ class ModernSettingsWindow:
         self.window = None
         self.token_manager = TokenManager()
         self.current_page = "server"  # Track current page
+        self.settings_state = {}  # Persistent state for settings
+
         
         # Windows 11 2025 Fluent Design Colors
         self.colors = {
@@ -81,8 +83,8 @@ class ModernSettingsWindow:
             except Exception as e:
                 logger.warning(f"Could not set window icon: {e}")
             
-            self._create_layout()
             self._load_settings()
+            self._create_layout()
             
             # Center window on screen
             self._center_window()
@@ -168,16 +170,23 @@ class ModernSettingsWindow:
                     bg=self.colors['nav_active'] if pid == self.current_page else self.colors['card']
                 ))
             
-            # Right content area
-            self.content_frame = tk.Frame(
+            # Right side container (Content + Buttons)
+            right_container = tk.Frame(
                 main_container,
                 bg=self.colors['bg_primary']
             )
-            self.content_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+            right_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
+            # Content area (Scrollable or just frame)
+            self.content_frame = tk.Frame(
+                right_container,
+                bg=self.colors['bg_primary']
+            )
+            self.content_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
             
-            # Bottom button bar
+            # Bottom button bar (Fixed at bottom of right side)
             button_bar = tk.Frame(
-                self.content_frame,
+                right_container,
                 bg=self.colors['card'],
                 height=70
             )
@@ -241,8 +250,7 @@ class ModernSettingsWindow:
         """Clear the content area."""
         try:
             for widget in self.content_frame.winfo_children():
-                if not isinstance(widget, tk.Frame) or widget.winfo_height() != 70:  # Don't remove button bar
-                    widget.destroy()
+                widget.destroy()
             logger.debug("Content area cleared")
         except Exception as e:
             log_exception(e, "Failed to clear content")
@@ -250,7 +258,7 @@ class ModernSettingsWindow:
     def _create_page_header(self, parent, title: str, subtitle: str = ""):
         """Create a modern page header with hero control."""
         try:
-            header_frame = tk.Frame(parent, bg=self.colors['card'])
+            header_frame = tk.Frame(parent, bg=self.colors['bg_primary'])
             header_frame.pack(fill=tk.X, padx=25, pady=(25, 15))
             
             # Title
@@ -258,7 +266,7 @@ class ModernSettingsWindow:
                 header_frame,
                 text=title,
                 font=tkfont.Font(family="Segoe UI", size=20, weight="bold"),
-                bg=self.colors['card'],
+                bg=self.colors['bg_primary'],
                 fg=self.colors['text_primary']
             )
             title_label.pack(anchor="w")
@@ -269,7 +277,7 @@ class ModernSettingsWindow:
                     header_frame,
                     text=subtitle,
                     font=tkfont.Font(family="Segoe UI", size=10),
-                    bg=self.colors['card'],
+                    bg=self.colors['bg_primary'],
                     fg=self.colors['text_secondary']
                 )
                 subtitle_label.pack(anchor="w", pady=(5, 0))
@@ -322,15 +330,30 @@ class ModernSettingsWindow:
             )
             label_widget.pack(anchor="w", pady=(0, 5))
             
+            # Initialize state if not present
+            if field_name not in self.settings_state:
+                self.settings_state[field_name] = placeholder
+            
+            # Variable binding
+            var = tk.StringVar(value=str(self.settings_state.get(field_name, "")))
+            
+            # Update state on change
+            def on_change(*args):
+                self.settings_state[field_name] = var.get()
+            var.trace_add("write", on_change)
+            
             # Entry
             entry = tk.Entry(
                 row,
+                textvariable=var,
                 font=tkfont.Font(family="Segoe UI", size=10),
                 relief=tk.SOLID,
                 borderwidth=1,
                 highlightthickness=1,
                 highlightcolor=self.colors['accent'],
-                highlightbackground=self.colors['border']
+                highlightbackground=self.colors['border'],
+                bg=self.colors['card'],
+                fg=self.colors['text_primary']
             )
             entry.pack(fill=tk.X, ipady=6)
             
@@ -348,7 +371,18 @@ class ModernSettingsWindow:
             row = tk.Frame(parent, bg=self.colors['card'])
             row.pack(fill=tk.X, padx=20, pady=8)
             
-            var = tk.BooleanVar()
+            # Initialize state if not present
+            if field_name not in self.settings_state:
+                self.settings_state[field_name] = False
+                
+            # Variable binding
+            var = tk.BooleanVar(value=bool(self.settings_state.get(field_name, False)))
+            
+            # Update state on change
+            def on_change(*args):
+                self.settings_state[field_name] = var.get()
+            var.trace_add("write", on_change)
+            
             checkbox = tk.Checkbutton(
                 row,
                 text=label,
@@ -386,8 +420,19 @@ class ModernSettingsWindow:
             )
             label_widget.pack(anchor="w", pady=(0, 5))
             
+            # Initialize state if not present
+            if field_name not in self.settings_state:
+                self.settings_state[field_name] = options[0] if options else ""
+            
+            # Variable binding
+            var = tk.StringVar(value=str(self.settings_state.get(field_name, "")))
+            
+            # Update state on change
+            def on_change(*args):
+                self.settings_state[field_name] = var.get()
+            var.trace_add("write", on_change)
+            
             # Dropdown
-            var = tk.StringVar()
             dropdown = ttk.Combobox(
                 row,
                 textvariable=var,
@@ -623,62 +668,35 @@ class ModernSettingsWindow:
     
     @logged_method
     def _load_settings(self):
-        """Load settings from Windows Registry."""
+        """Load settings from Windows Registry into persistent state."""
         try:
             logger.info("Loading settings from Windows Registry")
             
-            if hasattr(self, 'entries'):
-                # Server settings
-                if 'url' in self.entries:
-                    url = settings_manager.get_phoenix_url()
-                    if url:
-                        self.entries['url'].delete(0, tk.END)
-                        self.entries['url'].insert(0, url)
-                        logger.debug(f"Loaded URL: {url}")
-                
-                if 'device_id' in self.entries:
-                    device_id = settings_manager.get_device_id()
-                    if device_id:
-                        self.entries['device_id'].delete(0, tk.END)
-                        self.entries['device_id'].insert(0, device_id)
-                        logger.debug(f"Loaded device_id: {device_id}")
-                
-                # Capture settings
-                if 'capture_interval' in self.entries:
-                    interval = settings_manager.get_capture_interval()
-                    self.entries['capture_interval'].delete(0, tk.END)
-                    self.entries['capture_interval'].insert(0, str(interval))
-                
-                if 'heartbeat_interval' in self.entries:
-                    interval = settings_manager.get_heartbeat_interval()
-                    self.entries['heartbeat_interval'].delete(0, tk.END)
-                    self.entries['heartbeat_interval'].insert(0, str(interval))
-                
-                if 'similarity_threshold' in self.entries:
-                    threshold = settings_manager.get_similarity_threshold()
-                    self.entries['similarity_threshold'].delete(0, tk.END)
-                    self.entries['similarity_threshold'].insert(0, str(threshold))
-                
-                # Performance settings
-                if 'max_image_width' in self.entries:
-                    width = settings_manager.get_setting('max_image_width', 1024)
-                    self.entries['max_image_width'].delete(0, tk.END)
-                    self.entries['max_image_width'].insert(0, str(width))
-                
-                if 'jpeg_quality' in self.entries:
-                    quality = settings_manager.get_setting('jpeg_quality', 70)
-                    self.entries['jpeg_quality'].delete(0, tk.END)
-                    self.entries['jpeg_quality'].insert(0, str(quality))
+            # Server settings
+            url = settings_manager.get_phoenix_url()
+            if url:
+                self.settings_state['url'] = url
+                logger.debug(f"Loaded URL: {url}")
+            
+            device_id = settings_manager.get_device_id()
+            if device_id:
+                self.settings_state['device_id'] = device_id
+                logger.debug(f"Loaded device_id: {device_id}")
+            
+            # Capture settings
+            self.settings_state['capture_interval'] = str(settings_manager.get_capture_interval())
+            self.settings_state['heartbeat_interval'] = str(settings_manager.get_heartbeat_interval())
+            self.settings_state['similarity_threshold'] = str(settings_manager.get_similarity_threshold())
+            
+            # Performance settings
+            self.settings_state['max_image_width'] = str(settings_manager.get_setting('max_image_width', 1024))
+            self.settings_state['jpeg_quality'] = str(settings_manager.get_setting('jpeg_quality', 70))
             
             # Security settings
-            if hasattr(self, 'checkboxes') and 'verify_ssl' in self.checkboxes:
-                verify = settings_manager.get_verify_ssl()
-                self.checkboxes['verify_ssl'].set(verify)
+            self.settings_state['verify_ssl'] = settings_manager.get_verify_ssl()
             
             # Advanced settings
-            if hasattr(self, 'dropdowns') and 'log_level' in self.dropdowns:
-                level = settings_manager.get_log_level()
-                self.dropdowns['log_level'].set(level)
+            self.settings_state['log_level'] = settings_manager.get_log_level()
             
             logger.info("Settings loaded successfully")
             
@@ -692,8 +710,8 @@ class ModernSettingsWindow:
             logger.info("Saving settings to Windows Registry")
             
             # Validate and save URL
-            if 'url' in self.entries:
-                url = self.entries['url'].get().strip()
+            if 'url' in self.settings_state:
+                url = self.settings_state['url'].strip()
                 if not url:
                     logger.warning("Validation failed: URL is empty")
                     messagebox.showerror("Error", "Phoenix API URL is required")
@@ -708,8 +726,8 @@ class ModernSettingsWindow:
                 logger.info(f"Saved URL: {url}")
             
             # Validate and save Device ID
-            if 'device_id' in self.entries:
-                device_id = self.entries['device_id'].get().strip()
+            if 'device_id' in self.settings_state:
+                device_id = self.settings_state['device_id'].strip()
                 if not device_id or len(device_id) < 3:
                     logger.warning("Validation failed: Device ID too short")
                     messagebox.showerror("Error", "Device ID must be at least 3 characters")
@@ -719,9 +737,9 @@ class ModernSettingsWindow:
                 logger.info(f"Saved device_id: {device_id}")
             
             # Save intervals
-            if 'capture_interval' in self.entries:
+            if 'capture_interval' in self.settings_state:
                 try:
-                    capture_interval = int(self.entries['capture_interval'].get())
+                    capture_interval = int(self.settings_state['capture_interval'])
                     if capture_interval < 10:
                         raise ValueError("Capture interval must be at least 10 seconds")
                     settings_manager.save_capture_interval(capture_interval)
@@ -731,9 +749,9 @@ class ModernSettingsWindow:
                     messagebox.showerror("Error", f"Invalid interval: {e}")
                     return
             
-            if 'heartbeat_interval' in self.entries:
+            if 'heartbeat_interval' in self.settings_state:
                 try:
-                    heartbeat_interval = int(self.entries['heartbeat_interval'].get())
+                    heartbeat_interval = int(self.settings_state['heartbeat_interval'])
                     if heartbeat_interval < 10:
                         raise ValueError("Heartbeat interval must be at least 10 seconds")
                     settings_manager.save_heartbeat_interval(heartbeat_interval)
@@ -744,9 +762,9 @@ class ModernSettingsWindow:
                     return
             
             # Save similarity threshold
-            if 'similarity_threshold' in self.entries:
+            if 'similarity_threshold' in self.settings_state:
                 try:
-                    threshold = float(self.entries['similarity_threshold'].get())
+                    threshold = float(self.settings_state['similarity_threshold'])
                     if not 0 <= threshold <= 1:
                         raise ValueError("Similarity threshold must be between 0 and 1")
                     settings_manager.save_similarity_threshold(threshold)
@@ -757,9 +775,9 @@ class ModernSettingsWindow:
                     return
             
             # Save performance settings
-            if 'max_image_width' in self.entries:
+            if 'max_image_width' in self.settings_state:
                 try:
-                    max_width = int(self.entries['max_image_width'].get())
+                    max_width = int(self.settings_state['max_image_width'])
                     if max_width < 100:
                         raise ValueError("Image width must be at least 100 pixels")
                     settings_manager.save_setting('max_image_width', max_width)
@@ -769,9 +787,9 @@ class ModernSettingsWindow:
                     messagebox.showerror("Error", f"Invalid performance setting: {e}")
                     return
             
-            if 'jpeg_quality' in self.entries:
+            if 'jpeg_quality' in self.settings_state:
                 try:
-                    jpeg_quality = int(self.entries['jpeg_quality'].get())
+                    jpeg_quality = int(self.settings_state['jpeg_quality'])
                     if not 1 <= jpeg_quality <= 100:
                         raise ValueError("JPEG quality must be between 1 and 100")
                     settings_manager.save_setting('jpeg_quality', jpeg_quality)
@@ -782,14 +800,14 @@ class ModernSettingsWindow:
                     return
             
             # Save checkboxes
-            if hasattr(self, 'checkboxes') and 'verify_ssl' in self.checkboxes:
-                verify = self.checkboxes['verify_ssl'].get()
+            if 'verify_ssl' in self.settings_state:
+                verify = self.settings_state['verify_ssl']
                 settings_manager.save_verify_ssl(verify)
                 logger.info(f"Saved verify_ssl: {verify}")
             
             # Save dropdowns
-            if hasattr(self, 'dropdowns') and 'log_level' in self.dropdowns:
-                level = self.dropdowns['log_level'].get()
+            if 'log_level' in self.settings_state:
+                level = self.settings_state['log_level']
                 settings_manager.save_log_level(level)
                 logger.info(f"Saved log_level: {level}")
             
