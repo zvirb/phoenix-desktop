@@ -149,13 +149,15 @@ class TestConfigValidation:
         # Should not raise
         config.validate()
     
+    @patch('config.os.getenv')
     @patch('config.settings_manager')
-    def test_validate_missing_url(self, mock_settings):
+    def test_validate_missing_url(self, mock_settings, mock_getenv):
         """Test validation fails with missing URL."""
         from config import Config
-        
+
         mock_settings.get_phoenix_url.return_value = None
-        
+        mock_getenv.return_value = None  # No fallback env var
+
         config = Config()
         with pytest.raises(ValueError, match="PHOENIX_API_URL must be set"):
             config.validate()

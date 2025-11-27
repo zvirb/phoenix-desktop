@@ -53,8 +53,9 @@ class TestWindowsSettingsManager:
         """Test saving and retrieving boolean values."""
         settings_manager.save_setting("test_bool", True)
         value = settings_manager.get_setting("test_bool")
-        
-        assert value is True
+
+        # Windows Registry stores bools as integers (0/1), so use == not is
+        assert value == True
         assert isinstance(value, (bool, int))
     
     def test_save_and_get_dict(self, settings_manager):

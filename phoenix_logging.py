@@ -25,9 +25,11 @@ class PhoenixLogger:
         self.log_dir = Path(__file__).parent / "logs"
         self.log_dir.mkdir(exist_ok=True)
         
-        # Create unique log file name with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.session_id = timestamp
+        # Create unique log file name with timestamp (including microseconds for uniqueness)
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        microseconds = now.strftime("%f")[:3]  # First 3 digits (milliseconds)
+        self.session_id = f"{timestamp}_{microseconds}"
         self.log_file = self.log_dir / f"phoenix_tracker_{timestamp}.log"
         
         # Keep a reference to the latest log

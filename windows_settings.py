@@ -72,11 +72,11 @@ class WindowsSettingsManager:
     def get_setting(self, name: str, default: Any = None) -> Any:
         """
         Get a setting from Windows Registry.
-        
+
         Args:
             name: Setting name
             default: Default value if not found
-        
+
         Returns:
             Setting value or default
         """
@@ -87,21 +87,22 @@ class WindowsSettingsManager:
                 0,
                 winreg.KEY_READ
             )
-            
+
             value, value_type = winreg.QueryValueEx(key, name)
             winreg.CloseKey(key)
-            
+
             # Try to parse JSON for complex types
             if value_type == winreg.REG_SZ and isinstance(value, str):
                 try:
-                    return json.loads(value)
+                    value = json.loads(value)
                 except (json.JSONDecodeError, TypeError):
-                    return value
-            
+                    pass
+
+            logger.debug(f"Retrieved setting: {name}")
             return value
-            
+
         except FileNotFoundError:
-            logger.debug(f"Setting not found: {name}, using default")
+            logger.debug(f"Setting not found: {name}, using default: {default}")
             return default
         except Exception as e:
             logger.error(f"Failed to get setting {name}: {e}")
