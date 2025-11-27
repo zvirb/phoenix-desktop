@@ -1,302 +1,339 @@
-# Phoenix Desktop Screen Time Tracker
+# 🪟 Phoenix Tracker - Windows 11 System Tray Application
 
-A production-ready desktop agent that securely captures screen context and usage data for the Phoenix Digital Homestead project.
+## ✨ New Features - Version 2.0
 
-## Features
+Phoenix Tracker has been completely redesigned as a **Windows 11 system tray application** with a modern GUI!
 
-✨ **Smart Screenshot Capture** - Uses SSIM-based change detection to only upload when screen content changes significantly
+### What's New
 
-🔒 **Secure by Design** - HTTPS-only communication with JWT authentication via IAM service
+✅ **System Tray Integration** - Runs silently in the background with easy access from the system tray  
+✅ **Modern Windows 11 GUI** - Beautiful, clean settings interface matching Windows 11 design language  
+✅ **Secure Settings Storage** - All settings stored securely in Windows Registry  
+✅ **No More .env Files** - Settings managed through the GUI, stored in Windows  
+✅ **Easy Token Management** - Set up authentication tokens directly from the GUI  
+✅ **Start/Stop Controls** - Toggle tracking on/off from the system tray menu  
+✅ **Auto-Start Ready** - Automatically starts tracking when configured  
 
-🎮 **Gaming Mode** - Automatically pauses during gaming sessions to save resources
+---
 
-🪟 **Active Window Tracking** - Monitors which applications you're using
+## 🚀 Quick Start
 
-💓 **Heartbeat System** - Continuous activity monitoring every minute
+### First Time Setup
 
-🔐 **Secure Token Storage** - Uses Windows Credential Manager to safely store authentication tokens
+1. **Run the tracker:**
+   ```bash
+   start_tray.bat
+   ```
+   
+   Or:
+   ```bash
+   python tray_app.py
+   ```
 
-⚡ **Resource Efficient** - Resizes images, compresses to JPEG, and implements rate limiting
+2. **Configure settings:**
+   - Look for the Phoenix Tracker icon in your system tray (bottom-right of taskbar)
+   - Right-click the icon → **Settings**
+   - Enter your Phoenix API URL and Device ID
+   - Click **Save**
 
-## Architecture
+3. **Setup authentication:**
+   - Right-click tray icon → **Setup Token**
+   - Paste your device token from Phoenix Dashboard
+   - Click **OK**
 
-```mermaid
-graph TB
-    A[Desktop Tracker] --> B[Screenshot Capture]
-    A --> C[Window Detector]
-    A --> D[Gaming Detector]
-    A --> E[Activity Detector]
-    
-    B --> F[API Client]
-    C --> F
-    E --> F
-    
-    F --> G[HTTPS/TLS]
-    G --> H[Phoenix Backend]
-    H --> I[IAM Service]
-    H --> J[Screen Time Service]
-    J --> K[Ollama LLM]
-    
-    L[Token Manager] --> M[Windows Credential Manager]
-    L --> F
-    
-    style A fill:#4CAF50
-    style F fill:#2196F3
-    style H fill:#FF9800
-    style K fill:#9C27B0
-    style M fill:#F44336
+4. **Start tracking:**
+   - Right-click tray icon → **Start Tracking**
+
+That's it! The tracker runs in the background and you can access it anytime from the system tray.
+
+---
+
+## 🎯 System Tray Features
+
+### Menu Options
+
+**Right-click the tray icon to access:**
+
+- **🟢/🔴 Status** - Shows if tracker is running or stopped
+- **⚙️ Settings** - Open the settings window
+- **🔑 Setup Token** - Configure your authentication token
+- **▶️ Start Tracking** / **⏸️ Stop Tracking** - Toggle the tracker
+- **📊 View Logs** - Open the log file in your default text editor
+- **📖 About** - Information about the application
+- **🚪 Exit** - Close the application
+
+### Settings Window
+
+The modern GUI includes:
+
+#### Server Configuration
+- Phoenix API URL (with HTTPS validation)
+- Device ID (auto-suggested based on computer name)
+
+#### Capture Settings
+- Capture Interval (10-3600 seconds)
+- Heartbeat Interval (10-3600 seconds)
+- Similarity Threshold (0-1, for change detection)
+
+#### Performance Settings
+- Max Image Width (pixels)
+- JPEG Quality (1-100)
+
+#### Security Settings
+- Verify SSL Certificates (checkbox)
+
+#### Advanced Settings
+- Log Level (DEBUG, INFO, WARNING, ERROR)
+
+#### Token Management
+- View token status
+- Setup new token
+- Delete existing token
+
+---
+
+## 💾 Where Settings Are Stored
+
+All settings are stored securely in:
+- **Windows Registry:** `HKEY_CURRENT_USER\Software\PhoenixTracker`
+- **Authentication Token:** Windows Credential Manager
+
+This means:
+- ✅ No plaintext configuration files
+- ✅ Settings persist across updates
+- ✅ Secure storage using Windows built-in security
+- ✅ Per-user configuration
+
+---
+
+## 🔐 Security
+
+### Token Storage
+Tokens are stored in **Windows Credential Manager**, which:
+- Encrypts credentials using Windows Data Protection API (DPAPI)
+- Requires your Windows login to access
+- Is isolated per user account
+- Cannot be accessed by other users or applications without your permission
+
+### Settings Storage
+Settings in the Windows Registry are:
+- Stored in your user profile (`HKEY_CURRENT_USER`)
+- Protected by Windows file system permissions
+- Backed up with Windows System Restore
+- Easily exportable for backup
+
+---
+
+## 🖥️ Auto-Start on Windows Login
+
+### Method 1: Startup Folder (Recommended)
+
+1. Press `Win + R`
+2. Type: `shell:startup`
+3. Press Enter
+4. Create a shortcut to `start_tray.bat` in this folder
+
+### Method 2: Task Scheduler
+
+1. Open Task Scheduler
+2. Create Basic Task
+3. Name: "Phoenix Tracker"
+4. Trigger: When I log on
+5. Action: Start a program
+6. Program: `C:\Users\YourName\Documents\phoenix-desktop\start_tray.bat`
+7. Check "Run with highest privileges"
+
+---
+
+## 📁 File Structure
+
+```
+phoenix-desktop/
+├── 🎯 tray_app.py              # System tray application (NEW!)
+├── 🪟 windows_settings.py      # Windows Registry manager (NEW!)
+├── 🖼️ gui_settings.py          # Modern settings GUI (NEW!)
+├── ▶️ start_tray.bat            # Tray app launcher (NEW!)
+│
+├── Core Modules
+│   ├── desktop_tracker.py      # Original CLI tracker (still works)
+│   ├── api_client.py           # Phoenix API client
+│   ├── token_manager.py        # Token storage (Windows Credential Manager)
+│   ├── config.py               # Config loader (now uses Registry)
+│   ├── window_detector.py      # Active window tracking
+│   ├── activity_detector.py    # Screen change detection
+│   └── gaming_detector.py      # Gaming mode detection
+│
+├── Setup & Config
+│   ├── setup_wizard.py         # CLI setup wizard
+│   ├── setup.py                # Dependency installer
+│   └── requirements.txt        # Python dependencies
+│
+└── Documentation
+    ├── README_TRAY.md          # This file
+    ├── README.md               # Original documentation
+    ├── QUICKSTART.md           # Quick reference
+    └── INSTALL_WINDOWS.md      # Windows setup guide
 ```
 
-## Installation
+---
 
-### Prerequisites
+## 🛠️ Development & Testing
 
-- Python 3.8 or higher
-- Windows 10/11 (for full features)
-- Phoenix Backend with HTTPS enabled
+### Running from Source
 
-### Step 1: Clone or Download
-
-```powershell
-cd C:\path\to\your\projects
-# If you have git
-git clone <repository-url> phoenix-tracker
-cd phoenix-tracker
-
-# Or download and extract the ZIP file
-```
-
-### Step 2: Install Dependencies
-
-```powershell
+```bash
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the tray app
+python tray_app.py
+
+# Or use the batch file
+start_tray.bat
 ```
 
-### Step 3: Configure
+### Testing GUI Components
 
-```powershell
-# Copy the example configuration
-copy .env.example .env
+```bash
+# Test settings window
+python gui_settings.py
 
-# Edit .env with your settings
-notepad .env
-```
+# Test Windows Registry storage
+python -c "from windows_settings import settings_manager; print(settings_manager.get_all_settings())"
 
-Required settings:
-- `PHOENIX_API_URL` - Your Phoenix server URL (must use HTTPS)
-- `DEVICE_ID` - A unique identifier for this device
-
-### Step 4: Set Up Authentication
-
-Generate a device token from your Phoenix Web Dashboard:
-
-1. Log into Phoenix Web Dashboard
-2. Navigate to **Settings > Devices**
-3. Click **"Generate New Device Token"**
-4. Name it with your `DEVICE_ID` (e.g., "workstation-1")
-5. Copy the token
-
-Then run the setup wizard:
-
-```powershell
-python token_manager.py setup
-```
-
-Paste your token when prompted. It will be stored securely in Windows Credential Manager.
-
-### Step 5: Test the Connection
-
-```powershell
+# Test CLI tracker (still works)
 python desktop_tracker.py
 ```
 
-You should see:
-```
-✅ Connected to Phoenix backend
-✅ Tracker initialized successfully
-```
+### Viewing Logs
 
-Press `Ctrl+C` to stop.
+- From tray menu: Right-click → View Logs
+- Or open: `phoenix_tracker.log`
 
-## Usage
+---
 
-### Running Manually
+## 🔄 Migrating from Old Version
 
-```powershell
-python desktop_tracker.py
-```
+If you were using the old CLI version with `.env` file:
 
-### Running as a Background Service
+1. **Run the new tray app:**
+   ```bash
+   python tray_app.py
+   ```
 
-See [INSTALL_WINDOWS.md](./INSTALL_WINDOWS.md) for instructions on setting up the tracker to run automatically on startup.
+2. **Open Settings** from the tray menu
 
-### Command Line Options
+3. **Copy your old settings:**
+   - Phoenix URL from `.env` → Settings Window
+   - Device ID from `.env` → Settings Window
+   - Other settings as needed
 
-```powershell
-# Set up or update authentication token
-python token_manager.py setup
+4. **Setup token:**
+   - If you had a token in `.env`, set it up via "Setup Token" menu
 
-# View masked token (for verification)
-python token_manager.py show
+5. **Your token is already migrated** if you used Windows Credential Manager before
 
-# Delete stored token
-python token_manager.py delete
+The `.env` file is no longer used, but is kept for backward compatibility with the CLI mode.
 
-# Test window detection
-python window_detector.py
+---
 
-# Test activity detection
-python activity_detector.py
+## 🐛 Troubleshooting
 
-# Test gaming detection
-python gaming_detector.py
-```
+### Tray icon doesn't appear
+- Check if Python is running: Task Manager → Details → look for `python.exe` or `pythonw.exe`
+- Check logs: `phoenix_tracker.log`
+- Try running with `python tray_app.py` instead of `start_tray.bat`
 
-## Configuration
+### Settings not saving
+- Check Windows Registry permissions
+- Run as administrator if needed
+- Check logs for errors
 
-All settings can be configured via the `.env` file or environment variables:
+### "No settings configured" error
+- Right-click tray icon → Settings
+- Fill in Phoenix API URL and Device ID
+- Click Save
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `PHOENIX_API_URL` | `https://localhost:8000` | Phoenix backend URL (must be HTTPS) |
-| `DEVICE_ID` | `workstation-<computername>` | Unique device identifier |
-| `CAPTURE_INTERVAL` | `60` | Seconds between screenshot captures |
-| `HEARTBEAT_INTERVAL` | `60` | Seconds between heartbeat updates |
-| `SIMILARITY_THRESHOLD` | `0.95` | Image similarity threshold (0-1) |
-| `GAMING_PROCESSES` | See config | Comma-separated list of gaming processes |
-| `MAX_IMAGE_WIDTH` | `1024` | Maximum image width in pixels |
-| `JPEG_QUALITY` | `70` | JPEG compression quality (1-100) |
-| `VERIFY_SSL` | `true` | Verify SSL certificates |
-| `REQUEST_TIMEOUT` | `30` | API request timeout in seconds |
-| `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR) |
-
-### Gaming Process Blacklist
-
-Add or remove processes from the gaming blacklist in `.env`:
-
-```env
-GAMING_PROCESSES=steam.exe,dota2.exe,csgo.exe,valorant.exe,fortnite.exe
-```
-
-When any of these processes are detected, the tracker will pause for 5 minutes.
-
-## Privacy & Security
-
-### Data Privacy
-
-- **Local Processing**: All screenshots are analyzed by a local Ollama LLM running on your Phoenix server
-- **Automatic Deletion**: Raw images are deleted immediately after LLM analysis
-- **Text Only Storage**: Only the text summary is retained in the database
-- **Private Network**: No data leaves your private network
-
-### Security Features
-
-- **HTTPS Only**: All communication uses TLS 1.2+ encryption
-- **JWT Authentication**: Each request is authenticated via bearer token
-- **Secure Storage**: Tokens stored in Windows Credential Manager
-- **Rate Limiting**: Respects server rate limits (max 2 captures/minute)
-- **Certificate Validation**: SSL certificates are verified by default
-
-### Sensitive Data Handling
-
-The tracker captures your screen, which may contain:
-- Passwords (if visible)
-- Personal information
-- Proprietary work content
-
-**Recommendations:**
-- Only use on devices you control
-- Ensure your Phoenix instance is properly secured
-- Use VPN or private network access
-- Regularly review captured contexts in the dashboard
-
-## Troubleshooting
-
-### "No authentication token found"
-
-Run the token setup wizard:
-```powershell
-python token_manager.py setup
-```
-
-### "Authentication failed. Token may be invalid or expired"
-
-Your token has expired or is invalid. Generate a new one from the Phoenix Dashboard and run setup again.
-
-### "Connection test failed"
-
-Check that:
-1. Phoenix backend is running and accessible
-2. `PHOENIX_API_URL` is correct in `.env`
-3. SSL certificate is valid (or set `VERIFY_SSL=false` for testing)
-4. Firewall allows outbound HTTPS connections
-
-### Screenshots not uploading
-
-This is normal if your screen content hasn't changed significantly. The tracker uses SSIM to detect changes and only uploads when there's meaningful activity.
-
-To adjust sensitivity, lower the `SIMILARITY_THRESHOLD` in `.env` (e.g., `0.90`).
-
-### "Rate limited" messages
-
-The server is protecting itself from too many requests. The tracker will automatically retry after the cooldown period.
+### Tracker not starting
+- Check that you have a valid token: Right-click → Setup Token
+- Verify Phoenix server is accessible
+- Check logs for connection errors
 
 ### High CPU usage
+- Open Settings → Reduce Capture Interval
+- Reduce Max Image Width
+- Lower JPEG Quality
 
-Try:
-- Increasing `CAPTURE_INTERVAL` (e.g., `90` seconds)
-- Reducing `MAX_IMAGE_WIDTH` (e.g., `800`)
-- Lowering `JPEG_QUALITY` (e.g., `60`)
+---
 
-## Development
+## 📋 System Requirements
 
-### Project Structure
+- **OS:** Windows 10/11 (64-bit)
+- **Python:** 3.8 or higher
+- **RAM:** 100MB minimum
+- **Disk:** 50MB for application + logs
+- **Network:** HTTPS connection to Phoenix server
 
-```
-phoenix-tracker/
-├── desktop_tracker.py      # Main application
-├── api_client.py           # Phoenix API client
-├── token_manager.py        # Secure token storage
-├── config.py               # Configuration management
-├── window_detector.py      # Active window detection
-├── activity_detector.py    # SSIM change detection
-├── gaming_detector.py      # Gaming mode detection
-├── requirements.txt        # Python dependencies
-├── .env.example            # Configuration template
-├── README.md               # This file
-└── INSTALL_WINDOWS.md      # Windows installation guide
-```
+---
 
-### Running Tests
+## 🎨 Customization
 
-Each module can be tested independently:
+### Change Tray Icon
 
-```powershell
-python window_detector.py
-python activity_detector.py
-python gaming_detector.py
-```
+Edit `tray_app.py`, find the `create_icon_image()` function, and customize the icon design.
 
-### Logging
+### Modify Menu Items
 
-Logs are written to:
-- Console (stdout)
-- `phoenix_tracker.log` (in the application directory)
+Edit `tray_app.py`, find the `create_menu()` function, and add/remove menu items.
 
-Set `LOG_LEVEL=DEBUG` in `.env` for detailed logging.
+### Add New Settings
 
-## Support
+1. Add setting to `windows_settings.py` (add getter/setter methods)
+2. Add UI controls in `gui_settings.py` (add to appropriate section)
+3. Use the setting in `tray_app.py` or other modules
 
-For issues or questions:
-1. Check the [troubleshooting section](#troubleshooting)
-2. Review logs in `phoenix_tracker.log`
-3. Verify configuration in `.env`
-4. Test individual components using the test commands
+---
 
-## License
+## 🆘 Support
 
-[Your License Here]
+**Check These First:**
+1. View Logs: Tray menu → View Logs
+2. Verify Settings: Tray menu → Settings
+3. Test Connection: Ensure Phoenix server is running
+4. Check Token: Tray menu → Setup Token
 
-## Acknowledgments
+**Still Having Issues?**
+- Check `phoenix_tracker.log` for detailed error messages
+- Verify Windows Registry: `regedit` → `HKEY_CURRENT_USER\Software\PhoenixTracker`
+- Re-run setup: Tray menu → Settings
 
-Built for the Phoenix Digital Homestead project.
+---
+
+## 📝 Version History
+
+**v2.0** - System Tray Application
+- Complete redesign as Windows 11 system tray app
+- Modern GUI for settings
+- Windows Registry storage
+- Enhanced security with Credential Manager
+- Easy start/stop controls
+- Auto-start support
+
+**v1.0** - CLI Application
+- Command-line desktop tracker
+- .env file configuration
+- Basic token management
+
+---
+
+## 🎉 Enjoy
+
+Phoenix Tracker now integrates seamlessly with Windows 11, providing a clean, modern experience for tracking your desktop activity!
+
+**Quick Tips:**
+- Pin the tray icon so it's always visible
+- Set up auto-start for convenience
+- Adjust capture intervals to balance detail vs. performance
+- Use gaming mode to automatically pause during games
+
+Happy tracking! 🚀

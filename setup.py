@@ -49,68 +49,6 @@ def install_dependencies():
         return False
 
 
-def create_env_file():
-    """Create .env file from template."""
-    print_header("Creating Configuration File")
-    
-    env_file = Path(__file__).parent / ".env"
-    env_example = Path(__file__).parent / ".env.example"
-    
-    if env_file.exists():
-        response = input(".env file already exists. Overwrite? (y/N): ")
-        if response.lower() != 'y':
-            print("Skipping configuration file creation")
-            return True
-    
-    if not env_example.exists():
-        print("❌ .env.example not found")
-        return False
-    
-    # Copy template
-    env_file.write_text(env_example.read_text())
-    
-    print("✅ Created .env file")
-    print()
-    print("⚠️  IMPORTANT: Edit .env and set your Phoenix server URL:")
-    print(f"   {env_file.absolute()}")
-    print()
-    
-    # Ask if user wants to edit now
-    response = input("Open .env for editing now? (Y/n): ")
-    if response.lower() != 'n':
-        try:
-            if sys.platform == 'win32':
-                os.startfile(env_file)
-            else:
-                subprocess.call(['xdg-open', env_file])
-        except Exception:
-            print(f"Please edit manually: {env_file}")
-    
-    return True
-
-
-def setup_token():
-    """Run token setup wizard."""
-    print_header("Authentication Setup")
-    
-    print("To use the tracker, you need a device token from Phoenix.")
-    print()
-    response = input("Set up authentication token now? (Y/n): ")
-    
-    if response.lower() == 'n':
-        print("Skipping token setup. Run later with:")
-        print("  python token_manager.py setup")
-        return True
-    
-    try:
-        from token_manager import TokenManager
-        manager = TokenManager()
-        return manager.setup_wizard()
-    except Exception as e:
-        print(f"❌ Token setup failed: {e}")
-        return False
-
-
 def test_installation():
     """Test the installation."""
     print_header("Testing Installation")
@@ -121,12 +59,19 @@ def test_installation():
     print("Testing module imports...")
     modules = [
         'mss', 'PIL', 'cv2', 'numpy', 'psutil', 
-        'requests', 'dotenv', 'cryptography'
+        'requests', 'cryptography', 'pystray', 'tkinter'
     ]
     
     for module in modules:
         try:
-            __import__(module)
+            if module == 'tkinter':
+                import tkinter
+            elif module == 'PIL':
+                import PIL
+            elif module == 'cv2':
+                import cv2
+            else:
+                __import__(module)
             print(f"  ✅ {module}")
         except ImportError:
             print(f"  ❌ {module} - not found")
@@ -142,16 +87,6 @@ def test_installation():
             print(f"  ⚠️  pywin32 - not found (using fallback)")
     
     print()
-    
-    # Test configuration
-    try:
-        from config import config
-        config.validate()
-        print("✅ Configuration valid")
-    except Exception as e:
-        print(f"⚠️  Configuration issue: {e}")
-        print("   Please update your .env file")
-        all_ok = False
     
     return all_ok
 
@@ -171,13 +106,6 @@ def main():
         print("  pip install -r requirements.txt")
         sys.exit(1)
     
-    # Create .env file
-    if not create_env_file():
-        print("Please create .env file manually from .env.example")
-    
-    # Set up authentication
-    setup_token()
-    
     # Test installation
     if test_installation():
         print()
@@ -185,9 +113,9 @@ def main():
         print("✅ Phoenix Desktop Tracker is ready to use")
         print()
         print("Next steps:")
-        print("  1. Verify your .env configuration")
-        print("  2. Run the tracker:")
-        print("       python desktop_tracker.py")
+        print("  1. Run the tray application:")
+        print("       start_tray.bat")
+        print("  2. Configure settings by right-clicking the tray icon")
         print("  3. Set up automatic startup (see INSTALL_WINDOWS.md)")
         print()
     else:

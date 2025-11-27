@@ -9,6 +9,7 @@ from typing import Optional, Callable
 from windows_settings import settings_manager
 from token_manager import TokenManager
 from phoenix_logging import get_logger, logged_method, log_exception
+import webbrowser
 
 logger = get_logger(__name__)
 
@@ -544,6 +545,20 @@ class ModernSettingsWindow:
                 cursor="hand2"
             )
             setup_btn.pack(side=tk.LEFT, padx=(0, 10))
+
+            get_token_btn = tk.Button(
+                btn_frame,
+                text="Get Token ↗",
+                command=self._open_token_url,
+                bg=self.colors['bg_secondary'],
+                fg=self.colors['accent'],
+                font=tkfont.Font(family="Segoe UI", size=10),
+                relief=tk.FLAT,
+                padx=20,
+                pady=8,
+                cursor="hand2"
+            )
+            get_token_btn.pack(side=tk.LEFT, padx=(0, 10))
             
             if has_token:
                 delete_btn = tk.Button(
@@ -562,6 +577,28 @@ class ModernSettingsWindow:
             
         except Exception as e:
             log_exception(e, "Failed to show token page")
+
+    @logged_method
+    def _open_token_url(self):
+        """Open the Phoenix Dashboard to get a token."""
+        try:
+            url = settings_manager.get_phoenix_url()
+            if not url or url == "https://phoenix.example.com":
+                messagebox.showinfo(
+                    "Configuration Required",
+                    "Please configure your Phoenix Server URL first in the Server tab.",
+                    parent=self.window
+                )
+                return
+            
+            # Construct URL (assuming standard path)
+            target_url = f"{url.rstrip('/')}/settings/devices"
+            logger.info(f"Opening token URL: {target_url}")
+            webbrowser.open(target_url)
+            
+        except Exception as e:
+            log_exception(e, "Failed to open token URL")
+            messagebox.showerror("Error", f"Failed to open browser: {e}")
     
     @logged_method
     def _show_advanced_page(self):

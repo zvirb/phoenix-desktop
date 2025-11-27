@@ -12,7 +12,10 @@ from PIL import Image
 from config import config
 from token_manager import get_auth_token
 
-logger = logging.getLogger(__name__)
+from data_cache import DataCache
+from phoenix_logging import get_logger, log_exception
+
+logger = get_logger(__name__)
 
 
 class APIClient:
@@ -37,6 +40,9 @@ class APIClient:
         # Track last request time for rate limiting
         self.last_capture_time = 0
         self.min_capture_interval = 30  # seconds - respect rate limiting
+        
+        # Initialize data cache
+        self.cache = DataCache()
     
     def send_heartbeat(self, app_name: str, window_title: str, is_idle: bool = False) -> Dict[str, Any]:
         """
@@ -66,17 +72,25 @@ class APIClient:
             response.raise_for_status()
             
             logger.info(f"Heartbeat sent: {app_name}")
+            
+            # Process pending uploads if connection is good
+            self.process_pending_uploads()
+            
             return response.json()
             
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 401:
                 logger.error("Authentication failed. Token may be invalid or expired.")
                 raise
-            logger.error(f"Heartbeat failed: {e}")
+            log_exception(e, "Heartbeat failed")
+            # Cache failed heartbeat (except for auth errors)
+            if 500 <= e.response.status_code < 600:
+                self.cache.add_item('heartbeat', payload)
             raise
         except requests.exceptions.RequestException as e:
-            logger.warning(f"Heartbeat request failed: {e}")
-            return {'status': 'failed', 'error': str(e)}
+            logger.warning(f"Heartbeat request failed: {e}. Caching for retry.")
+            self.cache.add_item('heartbeat', payload)
+            return {'status': 'cached', 'error': str(e)}
     
     def upload_screenshot(self, image_bytes: bytes, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
@@ -100,15 +114,15 @@ class APIClient:
                 'retry_after': self.min_capture_interval - time_since_last
             }
         
+        data = metadata or {}
+        data['device_id'] = config.DEVICE_ID
+        data['timestamp'] = current_time
+        
         try:
             # Prepare multipart form data
             files = {
                 'file': ('screenshot.jpg', image_bytes, 'image/jpeg')
             }
-            
-            data = metadata or {}
-            data['device_id'] = config.DEVICE_ID
-            data['timestamp'] = current_time
             
             response = self.session.post(
                 config.capture_url,
@@ -126,6 +140,9 @@ class APIClient:
             if result.get('context_summary'):
                 logger.info(f"Context: {result['context_summary']}")
             
+            # Process pending uploads if connection is good
+            self.process_pending_uploads()
+            
             return result
             
         except requests.exceptions.HTTPError as e:
@@ -138,14 +155,56 @@ class APIClient:
             elif e.response.status_code == 413:
                 logger.error("Image too large. Try reducing quality or resolution.")
                 raise
+            elif 500 <= e.response.status_code < 600:
+                log_exception(e, "Server error. Caching for retry.")
+                self.cache.add_item('screenshot', data, image_bytes)
+                raise
             else:
-                logger.error(f"Upload failed: {e}")
+                log_exception(e, "Upload failed")
                 raise
                 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Upload request failed: {e}")
-            return {'status': 'failed', 'error': str(e)}
-    
+            log_exception(e, "Upload request failed. Caching for retry.")
+            self.cache.add_item('screenshot', data, image_bytes)
+            return {'status': 'cached', 'error': str(e)}
+
+    def process_pending_uploads(self):
+        """Process pending uploads from the cache."""
+        pending_items = self.cache.get_pending_items(limit=5)
+        if not pending_items:
+            return
+            
+        logger.info(f"Processing {len(pending_items)} pending uploads...")
+        
+        for item_id, item_type, data, file_data in pending_items:
+            try:
+                if item_type == 'heartbeat':
+                    self.session.post(
+                        config.heartbeat_url,
+                        json=data,
+                        timeout=config.REQUEST_TIMEOUT
+                    ).raise_for_status()
+                    logger.info(f"Processed pending heartbeat (ID: {item_id})")
+                    
+                elif item_type == 'screenshot':
+                    files = {
+                        'file': ('screenshot.jpg', file_data, 'image/jpeg')
+                    }
+                    self.session.post(
+                        config.capture_url,
+                        files=files,
+                        data=data,
+                        timeout=config.REQUEST_TIMEOUT
+                    ).raise_for_status()
+                    logger.info(f"Processed pending screenshot (ID: {item_id})")
+                
+                # Remove from cache on success
+                self.cache.remove_item(item_id)
+                
+            except Exception as e:
+                log_exception(e, f"Failed to process pending item {item_id}")
+                # Stop processing to avoid hammering the server if it's still flaky
+                break    
     def test_connection(self) -> bool:
         """
         Test the connection to Phoenix backend.
@@ -162,7 +221,7 @@ class APIClient:
             )
             return result.get('status') != 'failed'
         except Exception as e:
-            logger.error(f"Connection test failed: {e}")
+            log_exception(e, "Connection test failed")
             return False
 
 
