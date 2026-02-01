@@ -166,6 +166,13 @@ class TestConvenienceMethods:
         
         level = settings_manager.get_log_level()
         assert level == "DEBUG"
+
+    def test_ollama_port(self, settings_manager):
+        """Test Ollama port convenience methods."""
+        settings_manager.save_ollama_port(12345)
+        
+        port = settings_manager.get_ollama_port()
+        assert port == 12345
     
     def test_is_configured_true(self, settings_manager):
         """Test is_configured returns True when configured."""

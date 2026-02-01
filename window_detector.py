@@ -61,24 +61,92 @@ class WindowDetector:
         except Exception as e:
             logger.debug(f"Failed to get active window: {e}")
             return "Unknown", "Unknown"
-    
+
     def _get_fallback_window(self) -> Tuple[str, str]:
         """Fallback when Windows API is not available."""
         return "Unknown", "Platform not supported"
     
-    def is_idle(self, idle_threshold: int = 300) -> bool:
+    def is_idle(self, idle_threshold: int = 60) -> bool:
         """
-        Check if the user is idle (not implemented yet).
+        Check if the user is idle.
         
         Args:
             idle_threshold: Seconds of inactivity to consider idle
             
         Returns:
-            False (placeholder - requires additional implementation)
+            True if user has been idle for longer than threshold
         """
-        # This would require win32api.GetLastInputInfo() or similar
-        # For now, we always assume the user is active
-        return False
+        if not WINDOWS_AVAILABLE:
+            return False
+            
+        try:
+            idle_time = self.get_idle_time()
+            return idle_time > idle_threshold
+        except Exception as e:
+            logger.error(f"Error checking idle status: {e}")
+            return False
+
+    def get_idle_time(self) -> float:
+        """Get number of seconds since last user input."""
+        if not WINDOWS_AVAILABLE:
+            return 0.0
+            
+        try:
+            import ctypes
+            
+            class LASTINPUTINFO(ctypes.Structure):
+                _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
+                
+            lastInputInfo = LASTINPUTINFO()
+            lastInputInfo.cbSize = ctypes.sizeof(LASTINPUTINFO)
+            
+            if ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lastInputInfo)):
+                millis = ctypes.windll.kernel32.GetTickCount() - lastInputInfo.dwTime
+                return millis / 1000.0
+            return 0.0
+        except Exception:
+            return 0.0
+
+    def get_focused_monitor_index(self, mss_monitors: list) -> int:
+        """
+        Determine which monitor has the active window.
+        
+        Args:
+            mss_monitors: List of monitor dicts from mss.monitors
+            
+        Returns:
+            Index of the monitor in the list (1-based usually, 0 is all)
+        """
+        if not WINDOWS_AVAILABLE:
+            return 1
+            
+        try:
+            hwnd = win32gui.GetForegroundWindow()
+            rect = win32gui.GetWindowRect(hwnd)
+            win_left, win_top, win_right, win_bottom = rect
+            
+            # Calculate window center
+            win_center_x = (win_left + win_right) / 2
+            win_center_y = (win_top + win_bottom) / 2
+            
+            # Find which monitor contains the center
+            # mss_monitors[0] is usually "All Monitors", so start from 1
+            for i in range(1, len(mss_monitors)):
+                m = mss_monitors[i]
+                m_left = m['left']
+                m_top = m['top']
+                m_right = m_left + m['width']
+                m_bottom = m_top + m['height']
+                
+                if (m_left <= win_center_x <= m_right and 
+                    m_top <= win_center_y <= m_bottom):
+                    return i
+            
+            # Fallback to primary
+            return 1
+        except Exception as e:
+            logger.error(f"Error determining focused monitor: {e}")
+            return 1
 
 
 # Convenience function

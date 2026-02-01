@@ -1,11 +1,11 @@
 """
-Activity detection using SSIM (Structural Similarity Index) to detect screen changes.
+Activity detection using lightweight comparison (MSE/SSIM) without heavy OpenCV dependency.
+Uses NumPy and Pillow for efficient image processing.
 """
 import logging
 from typing import Optional
 import numpy as np
-import cv2
-from PIL import Image
+from PIL import Image, ImageOps
 
 from config import config
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class ActivityDetector:
-    """Detect significant changes in screen content."""
+    """Detect significant changes in screen content using optimized NumPy operations."""
     
     def __init__(self, similarity_threshold: float = None):
         """
@@ -21,10 +21,15 @@ class ActivityDetector:
         
         Args:
             similarity_threshold: Threshold for considering images similar (0-1)
-                                Higher values mean images must be more similar
+                                Higher values mean images must be more similar to be considered "no change".
+                                If similarity < threshold, it is a CHANGE.
         """
-        self.similarity_threshold = similarity_threshold or config.SIMILARITY_THRESHOLD
-        self.previous_image: Optional[np.ndarray] = None
+        self.similarity_threshold = similarity_threshold or 0.95
+        # Sync with global config if available, but allow override
+        if hasattr(config, 'SIMILARITY_THRESHOLD') and similarity_threshold is None:
+            self.similarity_threshold = config.SIMILARITY_THRESHOLD
+            
+        self.previous_image_gray: Optional[np.ndarray] = None
     
     def has_significant_change(self, current_image: Image.Image) -> bool:
         """
@@ -36,146 +41,89 @@ class ActivityDetector:
         Returns:
             True if there is a significant change, False otherwise
         """
-        # Convert PIL Image to numpy array
-        current_array = np.array(current_image)
-        
-        # If this is the first image, consider it significant
-        if self.previous_image is None:
-            self.previous_image = current_array
+        try:
+            # Resize for performance and consistency (e.g., 320x240)
+            # This drastically reduces the number of pixels to compare
+            target_size = (320, 240)
+            small_img = current_image.resize(target_size, resample=Image.Resampling.BILINEAR)
+            
+            # Convert to grayscale numpy array
+            gray_img = ImageOps.grayscale(small_img)
+            current_array = np.array(gray_img, dtype=np.float32)
+            
+            # If this is the first image, consider it significant (or init baseline)
+            if self.previous_image_gray is None:
+                self.previous_image_gray = current_array
+                return True
+            
+            # Calculate similarity
+            similarity = self._calculate_similarity_mse(self.previous_image_gray, current_array)
+            
+            logger.debug(f"Image similarity: {similarity:.4f} (threshold: {self.similarity_threshold})")
+            
+            # Check if similarity is below threshold (meaning they are different)
+            has_change = similarity < self.similarity_threshold
+            
+            if has_change:
+                self.previous_image_gray = current_array
+                logger.info(f"Significant change detected (similarity: {similarity:.4f})")
+            
+            return has_change
+            
+        except Exception as e:
+            logger.error(f"Error in activity detection: {e}")
+            # In case of error, assume change to ensure we don't miss anything? 
+            # Or False to prevent spam? Let's return True to be safe.
             return True
-        
-        # Calculate similarity
-        similarity = self._calculate_similarity(self.previous_image, current_array)
-        
-        logger.debug(f"Image similarity: {similarity:.4f} (threshold: {self.similarity_threshold})")
-        
-        # Significant change if similarity is below threshold
-        has_change = similarity < self.similarity_threshold
-        
-        if has_change:
-            self.previous_image = current_array
-            logger.info(f"Significant change detected (similarity: {similarity:.4f})")
-        
-        return has_change
     
-    def _calculate_similarity(self, img1: np.ndarray, img2: np.ndarray) -> float:
+    def _calculate_similarity_mse(self, img1: np.ndarray, img2: np.ndarray) -> float:
         """
-        Calculate SSIM between two images.
-        
-        Args:
-            img1: First image as numpy array
-            img2: Second image as numpy array
-            
-        Returns:
-            Similarity score (0-1, where 1 is identical)
+        Calculate similarity based on Normalized Mean Squared Error.
+        Returns a value between 0 and 1, where 1 is identical.
         """
         try:
-            # Ensure images are the same size
+            # Verify shapes
             if img1.shape != img2.shape:
-                # Resize img2 to match img1
-                img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
+                return 0.0
             
-            # Convert to grayscale for faster processing
-            if len(img1.shape) == 3:
-                gray1 = cv2.cvtColor(img1, cv2.COLOR_RGB2GRAY)
-            else:
-                gray1 = img1
+            # Mean Squared Error
+            err = np.sum((img1.astype("float") - img2.astype("float")) ** 2)
+            err /= float(img1.shape[0] * img1.shape[1])
             
-            if len(img2.shape) == 3:
-                gray2 = cv2.cvtColor(img2, cv2.COLOR_RGB2GRAY)
-            else:
-                gray2 = img2
+            # Max possible error for 8-bit images is 255^2
+            max_mse = 255.0 ** 2
             
-            # Resize to a smaller size for faster comparison
-            small_size = (320, 240)
-            gray1_small = cv2.resize(gray1, small_size)
-            gray2_small = cv2.resize(gray2, small_size)
+            # Normalize MSE to 0-1 (0 being no error/identical, 1 being max error)
+            normalized_mse = err / max_mse
             
-            # Calculate SSIM
-            from cv2 import quality
-            score = quality.QualitySSIM_compute(gray1_small, gray2_small)[0]
+            # Invert to get similarity (1 being identical, 0 being completely different)
+            similarity = 1.0 - normalized_mse
             
-            # Average the score across channels
-            return float(np.mean(score))
+            return max(0.0, min(1.0, similarity))
             
         except Exception as e:
-            logger.warning(f"SSIM calculation failed, using histogram comparison: {e}")
-            # Fallback to histogram comparison
-            return self._calculate_histogram_similarity(img1, img2)
-    
-    def _calculate_histogram_similarity(self, img1: np.ndarray, img2: np.ndarray) -> float:
-        """
-        Fallback similarity calculation using histogram comparison.
-        
-        Args:
-            img1: First image as numpy array
-            img2: Second image as numpy array
-            
-        Returns:
-            Similarity score (0-1)
-        """
-        try:
-            # Ensure images are the same size
-            if img1.shape != img2.shape:
-                img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
-            
-            # Convert to grayscale
-            if len(img1.shape) == 3:
-                gray1 = cv2.cvtColor(img1, cv2.COLOR_RGB2GRAY)
-                gray2 = cv2.cvtColor(img2, cv2.COLOR_RGB2GRAY)
-            else:
-                gray1 = img1
-                gray2 = img2
-            
-            # Calculate histograms
-            hist1 = cv2.calcHist([gray1], [0], None, [256], [0, 256])
-            hist2 = cv2.calcHist([gray2], [0], None, [256], [0, 256])
-            
-            # Normalize histograms
-            hist1 = cv2.normalize(hist1, hist1).flatten()
-            hist2 = cv2.normalize(hist2, hist2).flatten()
-            
-            # Calculate correlation
-            correlation = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
-            
-            # Correlation ranges from -1 to 1, normalize to 0-1
-            return (correlation + 1) / 2
-            
-        except Exception as e:
-            logger.error(f"Histogram similarity calculation failed: {e}")
-            # If all else fails, assume images are different
+            logger.error(f"MSE calculation failed: {e}")
             return 0.0
-    
+
     def reset(self) -> None:
-        """Reset the detector (clear previous image)."""
-        self.previous_image = None
+        """Reset the detector."""
+        self.previous_image_gray = None
         logger.debug("Activity detector reset")
 
-
 if __name__ == "__main__":
-    # Test the activity detector
-    import mss
-    from io import BytesIO
-    
+    # Simple test
     logging.basicConfig(level=logging.DEBUG)
+    print("Testing ActivityDetector (NumPy version)...")
     
-    detector = ActivityDetector()
+    det = ActivityDetector(similarity_threshold=0.98)
     
-    with mss.mss() as sct:
-        monitor = sct.monitors[1]
-        
-        # Capture first screenshot
-        sct_img = sct.grab(monitor)
-        img1 = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
-        
-        print(f"First capture - Change detected: {detector.has_significant_change(img1)}")
-        
-        # Wait a bit
-        import time
-        time.sleep(2)
-        
-        # Capture second screenshot
-        sct_img = sct.grab(monitor)
-        img2 = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
-        
-        print(f"Second capture - Change detected: {detector.has_significant_change(img2)}")
+    # Create two identical images
+    img_a = Image.new('RGB', (1920, 1080), color='white')
+    img_b = Image.new('RGB', (1920, 1080), color='white')
+    
+    # Create a different image
+    img_c = Image.new('RGB', (1920, 1080), color='black')
+    
+    print(f"Compare Identical: Change? {det.has_significant_change(img_a)}") # First one always True
+    print(f"Compare Identical: Change? {det.has_significant_change(img_b)}") # Should be False (very high similarity)
+    print(f"Compare Different: Change? {det.has_significant_change(img_c)}") # Should be True (low similarity)

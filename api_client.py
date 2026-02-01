@@ -1,252 +1,278 @@
 """
-Secure API client for Phoenix backend with IAM authentication.
+Secure API client for Phoenix backend with IAM authentication and offline queuing.
 """
 import logging
+import random
 import time
-from typing import Optional, Dict, Any
-from io import BytesIO
-
 import requests
-from PIL import Image
+from typing import Optional, Dict, Any, Tuple
+from urllib.parse import urljoin
+from request_queue import RequestQueue
 
-from config import config
-from token_manager import get_auth_token
-
-from data_cache import DataCache
-from phoenix_logging import get_logger, log_exception
-
-logger = get_logger(__name__)
-
+logger = logging.getLogger(__name__)
 
 class APIClient:
-    """Client for communicating with Phoenix backend."""
+    """Client for Phoenix Digital Homestead API."""
     
-    def __init__(self):
-        """Initialize API client."""
-        self.token = get_auth_token()
-        if not self.token:
-            raise ValueError("No authentication token available. Run token setup first.")
-        
+    def __init__(self, base_url: str, device_id: str, verify_ssl: bool = True):
+        self.base_url = base_url.rstrip('/')
+        self.device_id = device_id
+        self.verify_ssl = verify_ssl
+        self.token = None
+        self.device_token = None
         self.session = requests.Session()
         self.session.headers.update({
-            'Authorization': f'Bearer {self.token}',
-            'X-Device-ID': config.DEVICE_ID,
-            'User-Agent': f'PhoenixTracker/{config.DEVICE_ID}'
+            'User-Agent': f'PhoenixTracker/{device_id}',
+            'X-Device-ID': device_id
+        })
+        self.queue = RequestQueue()
+        
+    def set_token(self, token: str):
+        """Set authentication token for future requests."""
+        self.token = token
+        self.session.headers.update({
+            'Authorization': f'Bearer {token}'
         })
         
-        # Apply security settings
-        self.session.verify = config.VERIFY_SSL
-        
-        # Track last request time for rate limiting
-        self.last_capture_time = 0
-        self.min_capture_interval = 30  # seconds - respect rate limiting
-        
-        # Initialize data cache
-        self.cache = DataCache()
-    
-    def send_heartbeat(self, app_name: str, window_title: str, is_idle: bool = False) -> Dict[str, Any]:
+    def _make_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
         """
-        Send heartbeat with current app usage data.
-        
-        Args:
-            app_name: Name of the active application
-            window_title: Title of the active window
-            is_idle: Whether the user is idle
-            
-        Returns:
-            Response data from the server
+        Make an HTTP request with error handling and offline queuing.
         """
-        payload = {
-            'timestamp': time.time(),
-            'app_name': app_name,
-            'window_title': window_title,
-            'is_idle': is_idle
-        }
+        url = urljoin(self.base_url, endpoint)
+        
+        # Use a longer default timeout (30s for general, can be overridden)
+        timeout = kwargs.pop('timeout', 30)
+        
+        # Define the core request operation
+        def operation():
+            return self.session.request(
+                method,
+                url,
+                verify=self.verify_ssl,
+                timeout=timeout,
+                **kwargs
+            )
         
         try:
-            response = self.session.post(
-                config.heartbeat_url,
-                json=payload,
-                timeout=config.REQUEST_TIMEOUT
-            )
+            # 1. Attempt request (retries on network errors and 5xx)
+            response = self._retry_operation(operation, max_attempts=3, base_delay=1)
+            
+            # 2. Handle 401 Unauthorized (invalid/expired JWT)
+            if response.status_code == 401:
+                logger.info(f"Unauthorized (401) for {endpoint}, attempting re-authentication...")
+                if self.ensure_authenticated():
+                    # Retry once after refreshing token
+                    logger.info("Re-authentication successful, retrying request...")
+                    response = self._retry_operation(operation, max_attempts=2, base_delay=1)
+            
+            # 3. Check final status
             response.raise_for_status()
             
-            logger.info(f"Heartbeat sent: {app_name}")
-            
-            # Process pending uploads if connection is good
-            self.process_pending_uploads()
-            
-            return response.json()
-            
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 401:
-                logger.error("Authentication failed. Token may be invalid or expired.")
-                raise
-            log_exception(e, "Heartbeat failed")
-            # Cache failed heartbeat (except for auth errors)
-            if 500 <= e.response.status_code < 600:
-                self.cache.add_item('heartbeat', payload)
-            raise
-        except requests.exceptions.RequestException as e:
-            logger.warning(f"Heartbeat request failed: {e}. Caching for retry.")
-            self.cache.add_item('heartbeat', payload)
-            return {'status': 'cached', 'error': str(e)}
-    
-    def upload_screenshot(self, image_bytes: bytes, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        Upload screenshot to Phoenix backend.
-        
-        Args:
-            image_bytes: JPEG image bytes
-            metadata: Optional metadata to send with the image
-            
-        Returns:
-            Response data from the server including context summary
-        """
-        # Check rate limiting
-        current_time = time.time()
-        time_since_last = current_time - self.last_capture_time
-        
-        if time_since_last < self.min_capture_interval:
-            logger.warning(f"Rate limit: {self.min_capture_interval - time_since_last:.1f}s remaining")
-            return {
-                'status': 'rate_limited',
-                'retry_after': self.min_capture_interval - time_since_last
-            }
-        
-        data = metadata or {}
-        data['device_id'] = config.DEVICE_ID
-        data['timestamp'] = current_time
-        
-        try:
-            # Prepare multipart form data
-            files = {
-                'file': ('screenshot.jpg', image_bytes, 'image/jpeg')
-            }
-            
-            response = self.session.post(
-                config.capture_url,
-                files=files,
-                data=data,
-                timeout=config.REQUEST_TIMEOUT
-            )
-            
-            self.last_capture_time = current_time
-            response.raise_for_status()
-            
+            # 4. Success -> process queue and return JSON
+            self.process_queue()
             result = response.json()
-            logger.info(f"Screenshot uploaded: {result.get('status')}")
-            
-            if result.get('context_summary'):
-                logger.info(f"Context: {result['context_summary']}")
-            
-            # Process pending uploads if connection is good
-            self.process_pending_uploads()
-            
+            logger.debug(f"API Response from {endpoint}: {result}")
             return result
             
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 401:
-                logger.error("Authentication failed. Token may be invalid or expired.")
-                raise
-            elif e.response.status_code == 422:
-                logger.warning(f"Image processing failed: {e.response.json().get('message')}")
-                return e.response.json()
-            elif e.response.status_code == 413:
-                logger.error("Image too large. Try reducing quality or resolution.")
-                raise
-            elif 500 <= e.response.status_code < 600:
-                log_exception(e, "Server error. Caching for retry.")
-                self.cache.add_item('screenshot', data, image_bytes)
-                raise
-            else:
-                log_exception(e, "Upload failed")
-                raise
-                
-        except requests.exceptions.RequestException as e:
-            log_exception(e, "Upload request failed. Caching for retry.")
-            self.cache.add_item('screenshot', data, image_bytes)
-            return {'status': 'cached', 'error': str(e)}
-
-    def process_pending_uploads(self):
-        """Process pending uploads from the cache."""
-        pending_items = self.cache.get_pending_items(limit=5)
-        if not pending_items:
-            return
+            logger.error(f"HTTP Error for {endpoint}: {e.response.status_code} - {e.response.text}")
+            return {'status': 'failed', 'error': str(e), 'code': e.response.status_code}
             
-        logger.info(f"Processing {len(pending_items)} pending uploads...")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"API Request failed for {endpoint}: {e}")
+            
+            # 5. Queue heartbeats if they failed due to network issues
+            if "heartbeat" in endpoint and kwargs.get('json'):
+                logger.warning("Network error, queuing heartbeat for later.")
+                self.queue.add(
+                    endpoint=endpoint,
+                    method=method,
+                    data=kwargs.get('json')
+                )
+                return {'status': 'queued', 'error': str(e)}
+
+            return {'status': 'failed', 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Unexpected error in _make_request: {e}")
+            return {'status': 'failed', 'error': str(e)}
+
+    def process_queue(self):
+        """Retry pending requests from the offline queue."""
+        if self.queue.count() == 0:
+            return
+
+        # use a separate session or same session? Same is fine.
+        pending = self.queue.peek(limit=5)
         
-        for item_id, item_type, data, file_data in pending_items:
+        for req in pending:
             try:
-                if item_type == 'heartbeat':
-                    self.session.post(
-                        config.heartbeat_url,
-                        json=data,
-                        timeout=config.REQUEST_TIMEOUT
-                    ).raise_for_status()
-                    logger.info(f"Processed pending heartbeat (ID: {item_id})")
-                    
-                elif item_type == 'screenshot':
-                    files = {
-                        'file': ('screenshot.jpg', file_data, 'image/jpeg')
-                    }
-                    self.session.post(
-                        config.capture_url,
-                        files=files,
-                        data=data,
-                        timeout=config.REQUEST_TIMEOUT
-                    ).raise_for_status()
-                    logger.info(f"Processed pending screenshot (ID: {item_id})")
+                import json
+                data = json.loads(req['data']) if req['data'] else None
+                url = urljoin(self.base_url, req['endpoint'])
                 
-                # Remove from cache on success
-                self.cache.remove_item(item_id)
+                logger.info(f"Retrying queued item {req['id']}...")
+                # NOTE: We don't pass req['headers'] here so it uses the current 
+                # session headers (with the latest valid JWT token).
+                self.session.request(
+                    req['method'],
+                    url,
+                    json=data,
+                    verify=self.verify_ssl,
+                    timeout=15
+                ).raise_for_status()
+                
+                self.queue.pop(req['id'])
                 
             except Exception as e:
-                log_exception(e, f"Failed to process pending item {item_id}")
-                # Stop processing to avoid hammering the server if it's still flaky
-                break    
-    def test_connection(self) -> bool:
+                logger.warning(f"Failed to retry item {req['id']}: {e}")
+                break
+
+    def authenticate(self, device_token: str) -> Dict[str, Any]:
         """
-        Test the connection to Phoenix backend.
+        Authenticate with the server using device token.
         
-        Returns:
-            True if connection successful and authenticated
+        The device token (phx_...) is sent in the Authorization header.
+        Returns JWT access_token for subsequent API calls.
         """
-        try:
-            # Try to send a test heartbeat
-            result = self.send_heartbeat(
-                app_name="PhoenixTracker",
-                window_title="Connection Test",
-                is_idle=True
+        self.device_token = device_token
+        url = f"{self.base_url}/api/v1/devices/authenticate"
+        
+        # Define the auth request operation
+        def operation():
+            return self.session.post(
+                url,
+                headers={'Authorization': f'Bearer {device_token}'},
+                verify=self.verify_ssl,
+                timeout=30
             )
-            return result.get('status') != 'failed'
-        except Exception as e:
-            log_exception(e, "Connection test failed")
-            return False
-
-
-def create_client() -> Optional[APIClient]:
-    """
-    Create and validate an API client.
-    
-    Returns:
-        APIClient instance, or None if setup failed
-    """
-    try:
-        client = APIClient()
         
-        # Test the connection
-        logger.info("Testing connection to Phoenix backend...")
-        if client.test_connection():
-            logger.info("✅ Connected to Phoenix backend")
-            return client
-        else:
-            logger.error("❌ Connection test failed")
-            return None
+        try:
+            # Use retry with exponential backoff for network issues
+            response = self._retry_operation(operation, max_attempts=4, base_delay=2)
             
-    except ValueError as e:
-        logger.error(f"Client setup failed: {e}")
-        return None
+            response.raise_for_status()
+            data = response.json()
+            
+            # Update session with JWT for subsequent requests
+            if data.get('access_token'):
+                self.set_token(data['access_token'])
+                self.jwt_expires_at = time.time() + data.get('expires_in', 600) - 60  # Refresh 1 min early
+                logger.info(f"Authenticated successfully. JWT expires in {data.get('expires_in', 600)}s")
+            
+            return data
+            
+        except Exception as e:
+            logger.error(f"Authentication failed: {e}")
+            return {'status': 'failed', 'error': str(e)}
+    
+    def ensure_authenticated(self, device_token: str = None) -> bool:
+        """Re-authenticate if JWT is expired or about to expire."""
+        if not hasattr(self, 'jwt_expires_at') or time.time() >= self.jwt_expires_at:
+            logger.info("JWT expired or missing, re-authenticating...")
+            token = device_token or getattr(self, 'device_token', None)
+            if token is None:
+                logger.error("Device token not available for re-authentication.")
+                return False
+            # Use retry logic for authentication as well
+            result = self.authenticate(token)
+            return result.get('access_token') is not None
+        return True
+
+    def send_heartbeat(
+        self,
+        app_name: str,
+        window_title: str,
+        is_idle: bool,
+        ollama_available: bool = None,
+        ollama_models: list = None,
+        ollama_port: int = None,
+        tailscale_ip: str = None
+    ) -> Dict[str, Any]:
+        """
+        Send heartbeat data.
+        """
+        from datetime import datetime, timezone
+        # Use ISO format with 'Z' for UTC
+        timestamp = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        if not timestamp.endswith('Z'):
+            timestamp += 'Z'
+
+        data = {
+            'timestamp': timestamp,
+            'device_id': self.device_id,
+            'app_name': app_name or "Unknown",
+            'window_title': window_title or "Unknown",
+            'is_idle': bool(is_idle)
+        }
+        
+        # Add inference capabilities
+        if ollama_available is not None:
+            data['ollama_available'] = ollama_available
+        if ollama_models is not None:
+            data['ollama_models'] = ollama_models
+            
+        # Ensure ollama_port is an int and not None
+        if ollama_port is not None:
+            try:
+                data['ollama_port'] = int(ollama_port)
+            except (ValueError, TypeError):
+                logger.warning(f"Invalid ollama_port: {ollama_port}")
+        
+        if tailscale_ip is not None:
+            data['tailscale_ip'] = tailscale_ip
+        
+        logger.debug(f"Heartbeat data: {data}")
+        return self._make_request('POST', '/api/v1/screentime/heartbeat', json=data)
+
+    def upload_screenshot(self, image_bytes: bytes) -> Dict[str, Any]:
+        """Upload a screenshot."""
+        files = {
+            'file': ('screenshot.jpg', image_bytes, 'image/jpeg')
+        }
+        data = {
+            'device_id': self.device_id, 
+            'timestamp': time.time()
+        }
+        
+        logger.info(f"Uploading screenshot ({len(image_bytes)} bytes)...")
+        return self._make_request(
+            'POST', 
+            '/api/v1/screentime/capture', 
+            files=files, 
+            data=data, 
+            timeout=60
+        )
+
+    def _retry_operation(self, func, max_attempts=3, base_delay=1):
+        """Execute *func* with exponential backoff and jitter.
+        Returns the successful result or raises the last exception.
+        """
+        attempt = 0
+        while attempt < max_attempts:
+            try:
+                response = func()
+                # Treat 5xx server errors as retriable (they raise HTTPError)
+                if 500 <= response.status_code < 600:
+                    response.raise_for_status()
+                return response
+            except requests.exceptions.RequestException as e:
+                attempt += 1
+                if attempt >= max_attempts:
+                    logger.error(f"Operation failed after {attempt} attempts: {e}")
+                    raise
+                delay = base_delay * (2 ** (attempt - 1))
+                jitter = random.uniform(0, delay * 0.1)
+                sleep_time = delay + jitter
+                logger.warning(f"Retrying operation in {sleep_time:.2f}s (attempt {attempt}/{max_attempts})")
+                time.sleep(sleep_time)
+
+def create_client(base_url: str, device_id: str, verify_ssl: bool = True) -> Optional[APIClient]:
+    """Factory function."""
+    try:
+        return APIClient(base_url, device_id, verify_ssl)
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+        logger.error(f"Failed to create client: {e}")
         return None
+
+# Alias for backward compatibility
+PhoenixApiClient = APIClient

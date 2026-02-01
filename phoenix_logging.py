@@ -4,6 +4,7 @@ Provides detailed error logging with unique log files per session.
 """
 import logging
 import sys
+import os
 import traceback
 from pathlib import Path
 from datetime import datetime
@@ -22,7 +23,8 @@ class PhoenixLogger:
             name: Base name for the logger
         """
         self.name = name
-        self.log_dir = Path(__file__).parent / "logs"
+        self.app_data_dir = Path(os.environ.get('LOCALAPPDATA', os.path.expanduser('~'))) / "PhoenixTracker"
+        self.log_dir = self.app_data_dir / "logs"
         self.log_dir.mkdir(exist_ok=True)
         
         # Create unique log file name with timestamp (including microseconds for uniqueness)

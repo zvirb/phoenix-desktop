@@ -47,11 +47,14 @@ class Config:
     
     @property
     def GAMING_PROCESSES(self) -> List[str]:
-        """Get gaming process blacklist."""
+        """Get gaming process blacklist - only actual game executables."""
         processes = settings_manager.get_setting(
             'gaming_processes',
-            ['steam.exe', 'steamwebhelper.exe', 'dota2.exe', 'csgo.exe', 
-             'cyberpunk2077.exe', 'valorant.exe']
+            # Removed steam.exe and steamwebhelper.exe - these run all the time!
+            # Only include actual game executables
+            ['dota2.exe', 'csgo.exe', 'cs2.exe', 'cyberpunk2077.exe', 
+             'valorant.exe', 'league of legends.exe', 'overwatch.exe',
+             'eldenring.exe', 'baldursgate3.exe']
         )
         if isinstance(processes, str):
             # If stored as comma-separated string
@@ -84,14 +87,24 @@ class Config:
         return settings_manager.get_log_level()
     
     @property
+    def OLLAMA_PORT(self) -> int:
+        """Get Ollama port."""
+        return settings_manager.get_ollama_port()
+    
+    @property
+    def auth_url(self) -> str:
+        """Get the device authentication API endpoint."""
+        return f"{self.PHOENIX_API_URL.rstrip('/')}/api/v1/devices/authenticate"
+    
+    @property
     def heartbeat_url(self) -> str:
         """Get the heartbeat API endpoint."""
-        return f"{self.PHOENIX_API_URL.rstrip('/')}/api/screentime/heartbeat"
+        return f"{self.PHOENIX_API_URL.rstrip('/')}/api/v1/screentime/heartbeat"
     
     @property
     def capture_url(self) -> str:
         """Get the capture API endpoint."""
-        return f"{self.PHOENIX_API_URL.rstrip('/')}/api/screentime/capture"
+        return f"{self.PHOENIX_API_URL.rstrip('/')}/api/v1/screentime/capture"
     
     def validate(self) -> None:
         """Validate configuration settings."""

@@ -269,6 +269,14 @@ class WindowsSettingsManager:
         """Get log level, default INFO."""
         return self.get_setting("log_level", "INFO")
     
+    def save_ollama_port(self, port: int) -> bool:
+        """Save Ollama port."""
+        return self.save_setting("ollama_port", port)
+    
+    def get_ollama_port(self) -> int:
+        """Get Ollama port, default 11450."""
+        return self.get_setting("ollama_port", 11450)
+    
     def is_configured(self) -> bool:
         """Check if the app has been configured."""
         url = self.get_phoenix_url()

@@ -40,27 +40,35 @@ class TokenManager:
             key_file.write_bytes(self.encryption_key)
             key_file.chmod(0o600)  # Read/write for owner only
     
-    def save_token(self, token: str) -> None:
+    def save_token(self, token: str) -> bool:
         """
         Store the authentication token securely.
         
         Args:
             token: JWT or API token to store
+            
+        Returns:
+            True if successful, False otherwise
         """
-        if WINDOWS_AVAILABLE:
-            self._store_windows(token)
-        else:
-            self._store_fallback(token)
+        try:
+            if WINDOWS_AVAILABLE:
+                self._store_windows(token)
+            else:
+                self._store_fallback(token)
+            return True
+        except Exception as e:
+            print(f"Failed to save token: {e}")
+            return False
     
     def _store_windows(self, token: str) -> None:
         """Store token using Windows Credential Manager."""
         credential = {
-            'Type': win32con.CRED_TYPE_GENERIC,
+            'Type': win32cred.CRED_TYPE_GENERIC,
             'TargetName': self.TARGET_NAME,
             'UserName': config.DEVICE_ID,
             'CredentialBlob': token,
             'Comment': 'Phoenix Desktop Tracker Authentication Token',
-            'Persist': win32con.CRED_PERSIST_LOCAL_MACHINE
+            'Persist': win32cred.CRED_PERSIST_LOCAL_MACHINE
         }
         win32cred.CredWrite(credential, 0)
     
@@ -89,10 +97,15 @@ class TokenManager:
         """Retrieve token from Windows Credential Manager."""
         try:
             credential = win32cred.CredRead(
-                Type=win32con.CRED_TYPE_GENERIC,
+                Type=win32cred.CRED_TYPE_GENERIC,
                 TargetName=self.TARGET_NAME
             )
-            return credential['CredentialBlob']
+            # Windows Credential Manager stores as UTF-16LE bytes
+            token_bytes = credential['CredentialBlob']
+            if isinstance(token_bytes, bytes):
+                # Decode from UTF-16LE (Windows native encoding)
+                return token_bytes.decode('utf-16le').rstrip('\x00')
+            return token_bytes
         except Exception:
             return None
     
@@ -120,7 +133,7 @@ class TokenManager:
         """Delete token from Windows Credential Manager."""
         try:
             win32cred.CredDelete(
-                Type=win32con.CRED_TYPE_GENERIC,
+                Type=win32cred.CRED_TYPE_GENERIC,
                 TargetName=self.TARGET_NAME
             )
         except Exception:

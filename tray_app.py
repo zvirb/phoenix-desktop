@@ -13,27 +13,39 @@ import pystray
 from pystray import MenuItem as Item
 import tkinter as tk
 from tkinter import messagebox
+import subprocess
+try:
+    from plyer import notification
+except ImportError:
+    notification = None
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from windows_settings import settings_manager
-from gui_settings import ModernSettingsWindow
+# gui_settings is now a redirect, but we launch it via subprocess
 from token_manager import TokenManager
 from api_client import create_client
 from window_detector import WindowDetector
 from activity_detector import ActivityDetector
 from gaming_detector import GamingDetector
+from inference_detector import InferenceDetector
 import mss
 from io import BytesIO
 
 # Setup logging
+# Setup logging paths
+app_data_dir = Path(os.path.expandvars('%LOCALAPPDATA%')) / "PhoenixTracker"
+log_dir = app_data_dir / "logs"
+log_dir.mkdir(parents=True, exist_ok=True)
+log_file = log_dir / "phoenix_tracker.log"
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('phoenix_tracker.log')
+        logging.FileHandler(str(log_file))
     ]
 )
 logger = logging.getLogger(__name__)
@@ -69,6 +81,9 @@ class PhoenixTrayApp:
         self.window_detector = WindowDetector()
         self.activity_detector = ActivityDetector()
         self.gaming_detector = GamingDetector()
+        self.inference_detector = InferenceDetector(
+            ollama_host=f"http://localhost:{settings_manager.get_ollama_port()}"
+        )
         
         self.last_heartbeat = 0
         self.last_capture = 0
@@ -81,20 +96,27 @@ class PhoenixTrayApp:
     
     def show_first_time_setup(self):
         """Show first-time setup wizard."""
-        root = tk.Tk()
-        root.withdraw()  # Hide the main window
-        
-        result = messagebox.askquestion(
-            "Welcome to Phoenix Tracker",
-            "It looks like this is your first time running Phoenix Tracker.\n\n"
-            "Would you like to configure your settings now?",
-            icon='question'
-        )
-        
-        root.destroy()
-        
-        if result == 'yes':
-            self.open_settings()
+        try:
+            # Run the new Wizard using argument dispatch
+            subprocess.Popen([sys.executable, "--wizard"])
+        except Exception as e:
+            logger.error(f"Failed to launch wizard: {e}")
+
+    def notify(self, title, message):
+        """Send a native toast notification."""
+        if notification:
+            try:
+                notification.notify(
+                    title=title,
+                    message=message,
+                    app_name="Phoenix Tracker",
+                    app_icon=None, 
+                    timeout=5
+                )
+            except Exception as e:
+                logger.error(f"Notification failed: {e}")
+        else:
+            logger.warning(f"Notification skipped (plyer not found): {title} - {message}")
     
     def create_menu(self):
         """Create the system tray menu."""
@@ -104,6 +126,7 @@ class PhoenixTrayApp:
             Item(status_text, lambda: None, enabled=False),
             Item("", lambda: None, enabled=False),  # Separator
             Item("⚙️ Settings", self.open_settings),
+            Item("🪄 Setup Wizard", self.show_first_time_setup),
             Item("🔑 Setup Token", self.setup_token),
             Item("", lambda: None, enabled=False),  # Separator
             Item("▶️ Start Tracking" if not self.running else "⏸️ Stop Tracking", self.toggle_tracking),
@@ -119,45 +142,33 @@ class PhoenixTrayApp:
             self.icon.menu = self.create_menu()
     
     def open_settings(self, icon=None, item=None):
-        """Open the settings window."""
-        def callback():
-            settings = ModernSettingsWindow(on_save=self.on_settings_saved)
-            settings.show()
-        
-        # Run in main thread for GUI
-        if threading.current_thread() is threading.main_thread():
-            callback()
-        else:
-            # Schedule on main thread
-            tk.Tk().after(0, callback)
+        """Open the settings window in a separate process."""
+        def run_settings_process():
+            try:
+                logger.info("Launching settings window in separate process...")
+                # Run settings using argument dispatch
+                subprocess.Popen([sys.executable, "--settings"])
+                
+            except Exception as e:
+                logger.error(f"Failed to run settings process: {e}")
+
+        # Run in a separate thread to avoid blocking the tray icon
+        # Note: subprocess.Popen is non-blocking anyway, but keeping the thread wrapper is fine
+        threading.Thread(target=run_settings_process, daemon=True).start()
     
     def setup_token(self, icon=None, item=None):
         """Setup authentication token via GUI."""
-        root = tk.Tk()
-        root.withdraw()
-        
-        token = tk.simpledialog.askstring(
-            "Setup Token",
-            "Enter your device token from Phoenix Dashboard:",
-            parent=root
-        )
-        
-        if token:
-            if self.token_manager.save_token(token.strip()):
-                messagebox.showinfo("Success", "Token saved successfully!", parent=root)
-            else:
-                messagebox.showerror("Error", "Failed to save token", parent=root)
-        
-        root.destroy()
+        # We reuse the wizard or a simple dialog. 
+        # For now, let's trigger the wizard but maybe we should have a dedicated token dialog?
+        # Let's use the new Wizard as it has a token step.
+        self.show_first_time_setup()
     
     def on_settings_saved(self):
         """Callback when settings are saved."""
-        # Restart tracker if it was running
         was_running = self.running
         if was_running:
             self.stop_tracking()
         
-        # Reinitialize with new settings
         if was_running:
             self.start_tracking()
         
@@ -175,46 +186,45 @@ class PhoenixTrayApp:
     def start_tracking(self):
         """Start the tracking thread."""
         if self.running:
-            logger.warning("Tracker already running")
             return
         
         # Check configuration
         if not settings_manager.is_configured():
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showerror(
-                "Configuration Required",
-                "Please configure your settings before starting the tracker.",
-                parent=root
-            )
-            root.destroy()
-            self.open_settings()
+            self.notify("Setup Required", "Please configure settings first.")
+            self.show_first_time_setup()
             return
         
-        # Check token
         if not self.token_manager.get_token():
-            root = tk.Tk()
-            root.withdraw()
-            result = messagebox.askquestion(
-                "Token Required",
-                "No authentication token found. Would you like to set it up now?",
-                parent=root
-            )
-            root.destroy()
-            
-            if result == 'yes':
-                self.setup_token()
+            self.notify("Token Required", "Please setup your device token.")
+            self.show_first_time_setup()
             return
         
         # Initialize API client
-        self.api_client = create_client(
-            base_url=settings_manager.get_phoenix_url(),
-            device_id=settings_manager.get_device_id(),
-            verify_ssl=settings_manager.get_verify_ssl()
-        )
-        
-        if not self.api_client:
-            logger.error("Failed to initialize API client")
+        try:
+            self.api_client = create_client(
+                base_url=settings_manager.get_phoenix_url(),
+                device_id=settings_manager.get_device_id(),
+                verify_ssl=settings_manager.get_verify_ssl()
+            )
+            
+            if not self.api_client:
+                raise Exception("Failed to create API client")
+            
+            # Authenticate to get JWT token
+            device_token = self.token_manager.get_token()
+            auth_result = self.api_client.authenticate(device_token)
+            
+            if auth_result.get('status') == 'failed':
+                raise Exception(f"Authentication failed: {auth_result.get('error')}")
+            
+            if not auth_result.get('access_token'):
+                raise Exception("No access token received from server")
+                
+            logger.info("✅ Authenticated successfully")
+                
+        except Exception as e:
+            logger.error(f"Failed to initialize: {e}")
+            self.notify("Startup Failed", f"Could not initialize tracker: {e}")
             return
         
         self.running = True
@@ -222,24 +232,37 @@ class PhoenixTrayApp:
         self.tracker_thread.start()
         
         logger.info("✅ Tracker started")
+        self.notify("Phoenix Tracker", "Tracking started in background")
         self.update_menu()
     
     def stop_tracking(self):
         """Stop the tracking thread."""
+        if not self.running:
+            return
+
         self.running = False
         if self.tracker_thread:
             self.tracker_thread.join(timeout=5)
         
         logger.info("⏸️ Tracker stopped")
+        self.notify("Phoenix Tracker", "Tracking stopped")
         self.update_menu()
     
     def tracker_loop(self):
         """Main tracking loop."""
         logger.info("Tracker loop started")
+        device_token = self.token_manager.get_token()
         
         while self.running:
             try:
                 current_time = time.time()
+                
+                # Ensure JWT is valid (refresh if expired - every ~10 min)
+                if not self.api_client.ensure_authenticated(device_token):
+                    logger.error("Failed to refresh authentication")
+                    self.consecutive_errors += 1
+                    time.sleep(30)
+                    continue
                 
                 # Check for gaming mode
                 if self.gaming_detector.is_gaming():
@@ -260,15 +283,22 @@ class PhoenixTrayApp:
                 # Capture and upload screenshot
                 capture_interval = settings_manager.get_capture_interval()
                 if current_time - self.last_capture >= capture_interval:
-                    if self.process_screenshot():
-                        self.last_capture = current_time
-                        self.consecutive_errors = 0
+                    # check for user activity (keyboard/mouse)
+                    # Use 30s threshold or dynamic
+                    if self.window_detector.is_idle(idle_threshold=15):
+                        logger.debug("User is idle, skipping capture")
                     else:
-                        self.consecutive_errors += 1
+                        if self.process_screenshot():
+                            self.last_capture = current_time
+                            self.consecutive_errors = 0
+                        else:
+                            self.consecutive_errors += 1
                 
                 # Check for too many errors
                 if self.consecutive_errors >= self.max_consecutive_errors:
-                    logger.error(f"Too many consecutive errors ({self.consecutive_errors}). Pausing for 5 minutes.")
+                    msg = f"Too many errors ({self.consecutive_errors}). Pausing for 5 minutes."
+                    logger.error(msg)
+                    self.notify("Tracker Paused", "Too many network errors. Pausing for 5m.")
                     time.sleep(300)
                     self.consecutive_errors = 0
                 
@@ -287,12 +317,20 @@ class PhoenixTrayApp:
         
         try:
             app_name, window_title = self.window_detector.get_active_window()
-            is_idle = self.window_detector.is_idle()
+            # 60s threshold for "Away" status in heartbeat
+            is_idle = self.window_detector.is_idle(idle_threshold=60)
+            
+            # Get inference and network status
+            inference_status = self.inference_detector.get_inference_status()
             
             result = self.api_client.send_heartbeat(
                 app_name=app_name,
                 window_title=window_title,
-                is_idle=is_idle
+                is_idle=is_idle,
+                ollama_available=inference_status.get('ollama_available'),
+                ollama_models=inference_status.get('ollama_models'),
+                ollama_port=settings_manager.get_ollama_port(),
+                tailscale_ip=inference_status.get('tailscale_ip')
             )
             
             return result.get('status') != 'failed'
@@ -309,7 +347,10 @@ class PhoenixTrayApp:
             # Capture screen
             screenshot_bytes = self.capture_screen()
             if not screenshot_bytes:
+                logger.warning("Screenshot capture returned empty")
                 return False
+            
+            logger.debug(f"Captured screenshot: {len(screenshot_bytes)} bytes")
             
             # Check for significant change
             img = Image.open(BytesIO(screenshot_bytes))
@@ -318,22 +359,32 @@ class PhoenixTrayApp:
                 return True
             
             # Upload screenshot
+            logger.info("Uploading screenshot...")
             result = self.api_client.upload_screenshot(screenshot_bytes)
+            logger.info(f"Screenshot upload result: {result}")
             
             if result.get('status') == 'rate_limited':
                 logger.warning(f"Rate limited, retry in {result.get('retry_after', 0):.0f}s")
                 return True
             
-            return result.get('status') in ['success', 'processed']
+            # Check for success - backend might return various formats
+            if result.get('status') == 'failed':
+                return False
+            
+            return True  # Assume success if no explicit failure
         except Exception as e:
             logger.error(f"Screenshot processing failed: {e}")
             return False
+            return False
     
     def capture_screen(self):
-        """Capture the current screen and return as JPEG bytes."""
+        """Capture the current screen (focused monitor) and return as JPEG bytes."""
         try:
             with mss.mss() as sct:
-                monitor = sct.monitors[1]
+                # Detect which monitor has the active window
+                monitor_idx = self.window_detector.get_focused_monitor_index(sct.monitors)
+                monitor = sct.monitors[monitor_idx]
+                
                 screenshot = sct.grab(monitor)
                 
                 img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
@@ -354,14 +405,10 @@ class PhoenixTrayApp:
     
     def view_logs(self, icon=None, item=None):
         """Open the log file."""
-        log_path = Path(__file__).parent / "phoenix_tracker.log"
-        if log_path.exists():
-            os.startfile(log_path)
+        if log_file.exists():
+            os.startfile(log_file)
         else:
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showinfo("Info", "No log file found yet.", parent=root)
-            root.destroy()
+            self.notify("Logs", f"No log file found at: {log_file}")
     
     def show_about(self, icon=None, item=None):
         """Show about dialog."""
@@ -371,15 +418,16 @@ class PhoenixTrayApp:
         messagebox.showinfo(
             "About Phoenix Tracker",
             "Phoenix Desktop Screen Time Tracker\n"
-            "Version 2.0\n\n"
+            "Version 2.0 (Modern UI)\n\n"
             "A secure desktop agent that captures screen context\n"
             "and usage data for the Phoenix Digital Homestead.\n\n"
             "Features:\n"
-            "• Smart screenshot capture with SSIM detection\n"
+            "• Smart screenshot capture with MSE detection\n"
             "• Secure token storage in Windows Credential Manager\n"
             "• Gaming mode auto-pause\n"
             "• Active window tracking\n"
-            "• Modern Windows 11 GUI",
+            "• Modern Windows 11 GUI & Notifications\n"
+            "• Offline Data Queue",
             parent=root
         )
         
@@ -390,7 +438,6 @@ class PhoenixTrayApp:
         self.stop_tracking()
         if self.icon:
             self.icon.stop()
-        sys.exit(0)
     
     def run(self):
         """Run the system tray application."""
@@ -413,16 +460,28 @@ class PhoenixTrayApp:
 
 
 def main():
-    """Entry point for the system tray application."""
+    """Entry point for the application."""
+    # Freeze support for PyInstaller
+    import multiprocessing
+    multiprocessing.freeze_support()
+    
+    # Argument Dispatcher
+    if len(sys.argv) > 1:
+        if "--settings" in sys.argv:
+            from gui.main_window import main as run_settings
+            run_settings()
+            return
+        elif "--wizard" in sys.argv:
+            from gui.wizard import main as run_wizard
+            run_wizard()
+            return
+
+    # Default: Run Tray App
     try:
         app = PhoenixTrayApp()
         app.run()
     except Exception as e:
         logger.error(f"Failed to start application: {e}", exc_info=True)
-        root = tk.Tk()
-        root.withdraw()
-        messagebox.showerror("Error", f"Failed to start Phoenix Tracker:\n{e}")
-        root.destroy()
         sys.exit(1)
 
 
