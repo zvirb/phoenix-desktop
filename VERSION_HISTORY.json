@@ -1,0 +1,9 @@
+[
+    {
+        "version": "1.0.0",
+        "filename": "PhoenixTracker_v1_Legacy.exe",
+        "date": "2026-02-02",
+        "notes": "Last Python-only version before Tauri migration. Features: Passive tracking, System Tray.",
+        "hash": "90d2a76311bbc9a24e19f863705c276a59fa1592010802048c1376cdeb0979c6"
+    }
+]
