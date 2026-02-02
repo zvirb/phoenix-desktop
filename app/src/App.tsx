@@ -12,6 +12,7 @@ function App() {
   const [apiUrl, setApiUrl] = useState<string>("http://localhost:8000"); // Default
   const [subtasks, setSubtasks] = useState<string[]>([]);
   const [currentWindow, setCurrentWindow] = useState("Unknown");
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     const unlistenPromise = listen<string>('telemetry', (event) => {
@@ -185,6 +186,41 @@ function App() {
           <div key={i} className="log-entry">{log}</div>
         ))}
       </div>
+
+      {/* Settings Panel */}
+      <div style={{ position: 'fixed', bottom: 10, right: 10 }}>
+        <button onClick={() => setShowSettings(!showSettings)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '20px' }}>⚙️</button>
+      </div>
+
+      {showSettings && (
+        <div className="settings-modal" style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.9)', padding: 20, zIndex: 100,
+          display: 'flex', flexDirection: 'column', gap: 15
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2>Settings</h2>
+            <button onClick={() => setShowSettings(false)}>Close</button>
+          </div>
+
+          <div className="setting-item">
+            <label>API URL</label>
+            <input type="text" value={apiUrl} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
+            <small>Defined in Windows Registry</small>
+          </div>
+
+          <div className="setting-item">
+            <label>Device Token (Masked)</label>
+            <input type="text" value={token ? `${token.substring(0, 8)}...` : "Not Loaded"} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
+            <small>Stored in Windows Credential Manager</small>
+          </div>
+
+          <div className="setting-item">
+            <label>Status</label>
+            <div style={{ color: status === 'Connected' ? '#4caf50' : '#f44336' }}>{status}</div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
