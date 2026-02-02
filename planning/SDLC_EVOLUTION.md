@@ -21,9 +21,15 @@ To manage the complexity of this platform shift (Python -> Tauri/Electron), we w
 *   **Deliverable**: Approved Architecture RFC (RFC-001).
 *   **Key Decision**: Architecture Selection (Tauri vs. Electron) & Integration Strategy (Sidecar vs. Rewrite).
 *   **Action Items**:
-    *   [ ] Analyze Python codebase capability retention.
+    *   [x] Analyze Python codebase capability retention.
+    *   [x] Create Headless Sidecar Logic (`sidecar/headless_tracker.py`).
+    *   [x] Initialize Tauri Project (`app/`).
+    *   [x] Configure Tauri Sidecar (Rust -> Python IPC).
+    *   [x] Enhance `App.tsx` with a dashboard view (below the Omnibox).
+    *   [x] Implement specific "Context Events" in Sidecar (Active Window Title).
+    *   [x] Visualize the "Agent Interventions" (e.g., "Agent taking control").
+    *   [x] **BLOCKER RESOLVED**: Rust Build working (Windows SDK Installed).
     *   [ ] Draft `RFC-001-Architecture-Strategy`.
-    *   [ ] Select Frontend Stack (React/Vite recommended).
 
 ### Phase 1: The "Sidecar" Foundation (The Hybrid Era)
 *Focus: Bringing up the new UI while keeping existing logic alive.*
@@ -42,6 +48,14 @@ To manage the complexity of this platform shift (Python -> Tauri/Electron), we w
     *   **Smart Task Logic**: Connect to `phoenix-task-intelligence` for pre-save decomposition. (See [Integration Guide Sec 3](SERVICE_INTEGRATION_GUIDE.md#3-rapid-task-capture)).
     *   **Smart Screenshot**: Implement OCR pipeline via `phoenix-media-processor`. (See [Integration Guide Sec 5](SERVICE_INTEGRATION_GUIDE.md#5-media-services-tts--voice)).
     *   **Milestone**: "Phoenix Companion Beta".
+    *   **Settings UI**: Provide configuration for Service URLs and Auth Tokens (currently hardcoded/unreachable).
+*   **Action Items**:
+    *   [x] Implement Global Shortcut (Rust Backend `lib.rs`).
+    *   [x] Create "Omnibox" UI Layout (Frontend `App.tsx`).
+    *   [x] Connect "Enter" key to `phoenix-task-intelligence`.
+    *   [x] Implement "Smart Screenshot" Trigger.
+    *   [x] **ISSUE RESOLVED**: Configured Port Forwarding (8001/8002) for K8s Service Access.
+    *   [x] **REFACTORED**: Restored Registry-based Settings for API URL (Legacy Compatibility).
 
 ### Phase 3: Context & Insight (The "Mirror" Layer)
 *Focus: Visualizing the data we've been collecting.*
@@ -55,13 +69,14 @@ To manage the complexity of this platform shift (Python -> Tauri/Electron), we w
 *Focus: Closing the loop with proactive assistance.*
 *   **Goal**: The system nudges the user based on sensing data.
 *   **Features**:
-    *   **Intervention Engine**: WebSocket connection to `phoenix-adaptive-intervention`. (See [Integration Guide Sec 2](SERVICE_INTEGRATION_GUIDE.md#2-adaptive-interventions-websocket)).
+    *   [x] **Intervention Engine**: WebSocket connection to `phoenix-adaptive-intervention` via Sidecar (Port 8003).
     *   Focus Guard / DND integration.
     *   Meeting Prep prompts.
 
 ## 4. Quality Assurance & Standards
 *   **Testing**: E2E testing for the UI (Playwright), Unit tests for the Python Logic (Pytest).
 *   **CI/CD**: Github Actions for cross-platform builds (if expanding beyond Windows) and Release creation.
+*   **Data Integrity**: strict adherence to `is_agent_activity` flag to protect the Fusion Analytics downstream.
 
 ## 5. Environment Setup & Prerequisites
 To support the Phase 1 Architecture (Tauri + Python), the development environment requires:

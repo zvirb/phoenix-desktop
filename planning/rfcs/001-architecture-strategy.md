@@ -58,3 +58,10 @@ Modify `tray_app.py` to remove `pystray` and `customtkinter` when running in "Si
 *   The Sidecar runs with the same permissions as the main app.
 *   We must ensure the Python binary is signed or verified if distributed.
 *   Localhost sockets (if used) must be secured/authenticated to prevent other apps from injecting fake telemetry.
+
+## 6. Compliance Requirements
+*   **Agent Activity Filtering**: The system MUST implement the `is_agent_activity` flag in all telemetry payloads.
+*   **Logic**:
+    *   If `Input Source == Human (Keyboard/Mouse)` -> `is_agent_activity: false`.
+    *   If `Input Source == Simulated` (or if specific automation flags are set) -> `is_agent_activity: true`.
+*   **Reasoning**: To prevent "Ghost Productivity" metrics and false positive Health Nudges.

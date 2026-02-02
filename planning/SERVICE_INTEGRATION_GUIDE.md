@@ -11,30 +11,36 @@ This guide details how the Phoenix Desktop App (Rust/Tauri) should integrate wit
 *   **Endpoint**: `ws://phoenix-adaptive-intervention:8000/ws/{user_id}`
 *   **Protocol**:
     *   **Connect**: Send `Authorization` header or query param.
-    *   **Client -> Server (Telemetry)**:
+    *   **Client -> Server (Context Update)**:
+        > **Strict Compliance**: Must send `is_agent_activity` to prevent polluting human analytics.
         ```json
         {
-          "type": "telemetry",
-          "payload": {
-            "active_window": "VS Code",
-            "idle_seconds": 45,
-            "mouse_distance": 1200
+          "type": "context_update",
+          "context": {
+            "status": "active", // "active" | "idle"
+            "active_time_seconds": 2750, // Cumulative active time in current session
+            "is_agent_activity": false // TRUE if input is simulated (e.g. by agent), FALSE if physical user
           }
         }
         ```
-    *   **Server -> Client (Intervention)**:
+    *   **Server -> Client (Health Nudge)**:
+        *Triggered by: `active_time > 45min` AND `!is_agent_activity`*
         ```json
         {
-          "type": "intervention",
+          "type": "health_nudge", // Previously "intervention"
           "data": {
-            "id": "micro_break_123",
+            "id": "micro_break_strain_01",
             "title": "Time to Stretch",
-            "message": "You've been typing for 45 minutes.",
+            "message": "You've been active for 45 minutes.",
+            "suggestion": "Take a 2-minute break.",
             "action_link": "/emotion/strategies",
-            "severity": "low"
+            "severity": "medium"
           }
         }
         ```
+    *   **Fusion Bridge (Backend Internal)**:
+        *   The Desktop client does *not* send to Fusion directly.
+        *   `phoenix-adaptive-intervention` forwards validated human activity to `phoenix-multimodal-analytics-fusion:8083`.
 
 ## 3. Rapid Task Capture
 *   **Goal**: Break down tasks *before* saving them.
