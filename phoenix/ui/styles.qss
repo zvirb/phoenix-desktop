@@ -1,0 +1,60 @@
+/* Global Styles for Phoenix Desktop Sidebar */
+
+QWidget {
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    color: #e2e8f0; /* slate-200 */
+}
+
+/* Backgrounds */
+QMainWindow, #centralWidget {
+    background-color: #0f172a; /* slate-900 */
+}
+
+/* ScrollBars */
+QScrollBar:vertical {
+    border: none;
+    background: #1e293b; /* slate-800 */
+    width: 6px;
+    margin: 0px 0px 0px 0px;
+}
+QScrollBar::handle:vertical {
+    background: #475569; /* slate-600 */
+    min-height: 20px;
+    border-radius: 3px;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+/* Cards */
+QFrame#ActivityCard {
+    background-color: #1e293b; /* slate-800 */
+    border: 1px solid #334155; /* slate-700 */
+    border-radius: 8px;
+}
+QFrame#ActivityCard:hover {
+    border: 1px solid #3b82f6; /* blue-500 */
+    background-color: #253346;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #3b82f6; /* blue-500 */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+QPushButton:hover {
+    background-color: #2563eb; /* blue-600 */
+}
+QPushButton:pressed {
+    background-color: #1d4ed8; /* blue-700 */
+}
+
+/* Status Badges */
+QLabel#StatusLabel {
+    font-size: 11px;
+    color: #94a3b8; /* slate-400 */
+}

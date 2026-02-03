@@ -7,7 +7,7 @@ import time
 import requests
 from typing import Optional, Dict, Any, Tuple
 from urllib.parse import urljoin
-from request_queue import RequestQueue
+from .request_queue import RequestQueue
 
 logger = logging.getLogger(__name__)
 
@@ -242,6 +242,10 @@ class APIClient:
             data=data, 
             timeout=60
         )
+
+    def get_gamification_profile(self) -> Dict[str, Any]:
+        """Fetch user gamification profile (level, xp, etc)."""
+        return self._make_request('GET', '/api/v1/gamification/profile')
 
     def _retry_operation(self, func, max_attempts=3, base_delay=1):
         """Execute *func* with exponential backoff and jitter.
