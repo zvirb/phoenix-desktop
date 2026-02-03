@@ -1,7 +1,13 @@
+import sys
+from pathlib import Path
+import time
 import requests
+
+# Add phoenix/core to path
+sys.path.insert(0, str(Path(__file__).parent / "phoenix" / "core"))
+
 from config import config
 from token_manager import get_auth_token
-import time
 
 def debug_connection():
     token = get_auth_token()
@@ -23,7 +29,14 @@ def debug_connection():
     }
     
     print(f"Sending heartbeat to: {config.heartbeat_url}")
-    print(f"Headers: {headers}")
+
+    # Create safe headers for logging
+    safe_headers = headers.copy()
+    if 'Authorization' in safe_headers:
+        # Mask the token
+        safe_headers['Authorization'] = f"Bearer {token[:4]}...{token[-4:]}" if len(token) > 8 else "***"
+
+    print(f"Headers: {safe_headers}")
     
     try:
         response = requests.post(
