@@ -126,6 +126,7 @@ function App() {
           <input
             autoFocus
             type="text"
+            aria-label="Task description"
             placeholder="What are you working on?"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -136,10 +137,14 @@ function App() {
             }}
             style={{ flex: 1 }}
           />
-          <button onClick={() => {
-            invoke('trigger_capture');
-            setLogs(prev => ["[Capture] Manual Trigger Sent", ...prev]);
-          }}>📷</button>
+          <button
+            aria-label="Capture screenshot"
+            title="Capture screenshot"
+            onClick={() => {
+              invoke('trigger_capture');
+              setLogs(prev => ["[Capture] Manual Trigger Sent", ...prev]);
+            }}
+          >📷</button>
         </div>
         {loading && <span style={{ marginLeft: 10 }}>Processing...</span>}
       </div>
@@ -189,17 +194,28 @@ function App() {
 
       {/* Settings Panel */}
       <div style={{ position: 'fixed', bottom: 10, right: 10 }}>
-        <button onClick={() => setShowSettings(!showSettings)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '20px' }}>⚙️</button>
+        <button
+          aria-label="Open settings"
+          title="Open settings"
+          onClick={() => setShowSettings(!showSettings)}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '20px' }}
+        >⚙️</button>
       </div>
 
       {showSettings && (
-        <div className="settings-modal" style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.9)', padding: 20, zIndex: 100,
-          display: 'flex', flexDirection: 'column', gap: 15
-        }}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="settings-title"
+          className="settings-modal"
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.9)', padding: 20, zIndex: 100,
+            display: 'flex', flexDirection: 'column', gap: 15
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2>Settings</h2>
+            <h2 id="settings-title">Settings</h2>
             <button onClick={() => setShowSettings(false)}>Close</button>
           </div>
 
