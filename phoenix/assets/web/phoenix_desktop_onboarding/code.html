@@ -173,6 +173,12 @@
           btn.innerText = "Connected!";
           btn.classList.add('bg-green-600');
           setTimeout(() => {
+            // Bridge to Desktop App
+            console.log("PHOENIX_ONBOARDING_SAVE:" + JSON.stringify({
+              token: data.access_token,
+              device_token: token,
+              core_url: localStorage.getItem('phoenix_core_url')
+            }));
             alert("Device Authenticated Successfully!");
           }, 500);
         } else {
