@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Phoenix War Room - Network Graph</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet" />
+  <!-- Material Symbols -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Theme Configuration -->
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#1754cf",
+            "background-light": "#f6f6f8",
+            "background-dark": "#111621",
+            "surface-dark": "#1a202e",
+            "surface-highlight": "#292e38",
+            "hot": "#ef4444",
+            "warm": "#f59e0b",
+            "cold": "#3b82f6",
+            "idle": "#64748b",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+          borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    /* Custom pulsing animation for hot nodes */
+    @keyframes pulse-hot {
+      0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
+    }
+
+    .animate-pulse-hot {
+      animation: pulse-hot 2s infinite;
+    }
+  </style>
+  <style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white">
+  <div
+    class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark">
+    <!-- Top App Bar -->
+    <header
+      class="flex items-center px-4 py-3 justify-between sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-200 dark:border-white/5">
+      <button
+        class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+        <span class="material-symbols-outlined text-slate-900 dark:text-white">arrow_back</span>
+      </button>
+      <div class="flex flex-col items-center">
+        <h2 class="text-lg font-bold leading-tight tracking-tight">War Room</h2>
+        <span class="text-[10px] uppercase tracking-widest text-primary font-bold">Phoenix Orchestrator</span>
+      </div>
+      <button
+        class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors relative">
+        <span class="material-symbols-outlined text-slate-900 dark:text-white">notifications</span>
+        <span class="absolute top-2 right-2 size-2 bg-hot rounded-full border border-background-dark"></span>
+      </button>
+    </header>
+    <!-- Chips / Filter -->
+    <div class="flex gap-3 px-4 py-4 overflow-x-auto no-scrollbar scroll-smooth">
+      <button
+        class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary pl-4 pr-4 shadow-lg shadow-primary/20">
+        <span class="text-white text-xs font-bold uppercase tracking-wide">Network Graph</span>
+      </button>
+      <button
+        class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-surface-highlight border border-gray-200 dark:border-white/5 pl-4 pr-4 hover:bg-gray-50 dark:hover:bg-white/5">
+        <span class="text-slate-600 dark:text-gray-300 text-xs font-medium">Hot Zones</span>
+      </button>
+      <button
+        class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-surface-highlight border border-gray-200 dark:border-white/5 pl-4 pr-4 hover:bg-gray-50 dark:hover:bg-white/5">
+        <span class="text-slate-600 dark:text-gray-300 text-xs font-medium">Idle Nodes</span>
+      </button>
+    </div>
+    <!-- Network Graph Visualization -->
+    <div class="relative w-full h-96 bg-background-light dark:bg-background-dark overflow-hidden group">
+      <!-- Grid Background -->
+      <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
+        style="background-image: linear-gradient(#9da6b8 1px, transparent 1px), linear-gradient(90deg, #9da6b8 1px, transparent 1px); background-size: 40px 40px;">
+      </div>
+      <!-- SVG Connections -->
+      <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
+        <!-- Defs for gradients -->
+        <defs>
+          <lineargradient id="grad-hot" x1="0%" x2="100%" y1="0%" y2="0%">
+            <stop offset="0%" style="stop-color:#ef4444;stop-opacity:1"></stop>
+            <stop offset="100%" style="stop-color:#1754cf;stop-opacity:1"></stop>
+          </lineargradient>
+          <lineargradient id="grad-cold" x1="0%" x2="100%" y1="0%" y2="0%">
+            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1"></stop>
+            <stop offset="100%" style="stop-color:#1754cf;stop-opacity:1"></stop>
+          </lineargradient>
+        </defs>
+        <!-- Connection Lines -->
+        <line class="opacity-60" stroke="url(#grad-hot)" stroke-dasharray="4" stroke-width="2" x1="50%" x2="20%"
+          y1="50%" y2="25%"></line>
+        <line class="opacity-30" stroke="url(#grad-cold)" stroke-width="1" x1="50%" x2="80%" y1="50%" y2="30%"></line>
+        <line class="opacity-20" stroke="#64748b" stroke-width="1" x1="50%" x2="70%" y1="50%" y2="75%"></line>
+        <line class="opacity-40" stroke="#f59e0b" stroke-width="1.5" x1="50%" x2="30%" y1="50%" y2="80%"></line>
+        <!-- Cross connections -->
+        <line class="opacity-20" stroke="#ef4444" stroke-width="0.5" x1="20%" x2="30%" y1="25%" y2="80%"></line>
+      </svg>
+      <!-- Nodes -->
+      <!-- Center Node (Conductor) -->
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
+        <div
+          class="size-16 rounded-full bg-background-light dark:bg-background-dark border-4 border-primary shadow-[0_0_30px_rgba(23,84,207,0.3)] flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary text-3xl">hub</span>
+        </div>
+        <span
+          class="mt-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-background-light dark:bg-background-dark px-2 py-0.5 rounded-full border border-gray-200 dark:border-white/10">Phoenix
+          Core</span>
+      </div>
+      <!-- Node 1: Project Alpha (Hot) -->
+      <div
+        class="absolute top-[25%] left-[20%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center cursor-pointer group/node">
+        <div
+          class="size-12 rounded-full bg-hot animate-pulse-hot flex items-center justify-center text-white shadow-lg relative">
+          <span class="material-symbols-outlined text-lg">local_fire_department</span>
+          <div
+            class="absolute -top-1 -right-1 size-4 bg-background-dark rounded-full flex items-center justify-center border border-white/20">
+            <span class="text-[8px] font-bold text-white">5</span>
+          </div>
+        </div>
+        <span class="mt-2 text-xs font-bold text-slate-800 dark:text-white drop-shadow-md">Alpha</span>
+      </div>
+      <!-- Node 2: Ops Beta (Cold) -->
+      <div
+        class="absolute top-[30%] left-[80%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center opacity-70 hover:opacity-100 transition-opacity cursor-pointer">
+        <div
+          class="size-10 rounded-full bg-surface-highlight border-2 border-cold flex items-center justify-center text-cold">
+          <span class="material-symbols-outlined text-lg">ac_unit</span>
+        </div>
+        <span class="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">Beta</span>
+      </div>
+      <!-- Node 3: Research (Warm) -->
+      <div
+        class="absolute top-[80%] left-[30%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center cursor-pointer">
+        <div
+          class="size-10 rounded-full bg-surface-highlight border-2 border-warm flex items-center justify-center text-warm shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+          <span class="material-symbols-outlined text-lg">psychology</span>
+        </div>
+        <span class="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">R&amp;D</span>
+      </div>
+      <!-- Node 4: Logistics (Idle) -->
+      <div
+        class="absolute top-[75%] left-[70%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center opacity-50">
+        <div
+          class="size-8 rounded-full bg-surface-highlight border border-idle flex items-center justify-center text-idle">
+          <span class="material-symbols-outlined text-sm">inventory_2</span>
+        </div>
+        <span class="mt-2 text-[10px] font-medium text-slate-500 dark:text-slate-500">Storage</span>
+      </div>
+    </div>
+    <!-- Expanded Detail View (Memory Palace) -->
+    <div
+      class="flex-1 bg-white dark:bg-surface-dark rounded-t-3xl -mt-6 z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-gray-100 dark:border-white/5 p-6 pb-12 transition-transform">
+      <!-- Draggable Handle -->
+      <div class="w-12 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full mx-auto mb-6"></div>
+      <!-- Header of Selected Node -->
+      <div class="flex justify-between items-start mb-6">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white">Project Alpha</h3>
+            <span
+              class="bg-hot/20 text-hot text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-hot/20">Critical</span>
+          </div>
+          <p class="text-slate-500 dark:text-slate-400 text-sm">High-frequency cognitive load detected.</p>
+        </div>
+        <button
+          class="size-10 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+          <span class="material-symbols-outlined">open_in_full</span>
+        </button>
+      </div>
+      <!-- Metrics Grid -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div
+          class="bg-background-light dark:bg-background-dark p-3 rounded-xl border border-gray-100 dark:border-white/5">
+          <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
+            <span class="material-symbols-outlined text-sm">thermometer</span>
+            <span class="text-xs font-medium uppercase">Temp</span>
+          </div>
+          <p class="text-lg font-bold text-hot">98.2°F</p>
+        </div>
+        <div
+          class="bg-background-light dark:bg-background-dark p-3 rounded-xl border border-gray-100 dark:border-white/5">
+          <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
+            <span class="material-symbols-outlined text-sm">memory</span>
+            <span class="text-xs font-medium uppercase">Tokens</span>
+          </div>
+          <p class="text-lg font-bold text-slate-900 dark:text-white">45k</p>
+        </div>
+      </div>
+      <!-- Active Agents List -->
+      <h4 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Active Agents</h4>
+      <div class="space-y-3">
+        <!-- Agent 1 -->
+        <div
+          class="flex items-center gap-3 p-3 rounded-xl bg-background-light dark:bg-background-dark border border-gray-100 dark:border-white/5 hover:border-primary/50 transition-colors group cursor-pointer">
+          <div class="size-10 rounded-full bg-cover bg-center shadow-inner" data-alt="Avatar of Agent 1"
+            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCjurF9GAI3fFbbz-Cl7kE2YcPDlv_feBARnRQghH6O_7RR_yrLbhrV9sjvgAGm5qRgf4NpS3iaG1vY_w7HCjT0Ht1D1FD6uTpG4smoR7YAtNu-kf7r1VyHE_upoqe8X8FpCqnn-MSIbnczrOURpetI4tNG12_9tyBiOoDzPTiU4hihi47cpL1R0jtXg1bTVx0-3_lTgBIAKWya-WQukqXNJ8IZMAUa7GQ7t3U2W16ziFoUg9tXvcVGvAWDKb8iYQTuiMkoZiLHWQ0');">
+          </div>
+          <div class="flex-1">
+            <div class="flex justify-between items-center">
+              <p class="text-sm font-bold text-slate-900 dark:text-white">Strategist A1</p>
+              <span class="size-2 rounded-full bg-green-500 animate-pulse"></span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Processing market vectors...</p>
+          </div>
+        </div>
+        <!-- Agent 2 -->
+        <div
+          class="flex items-center gap-3 p-3 rounded-xl bg-background-light dark:bg-background-dark border border-gray-100 dark:border-white/5 hover:border-primary/50 transition-colors group cursor-pointer">
+          <div class="size-10 rounded-full bg-cover bg-center shadow-inner" data-alt="Avatar of Agent 2"
+            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB0uOZ5uAN4VhauYRCbyFFd5I7YzL8fZ1Vn71_UQi3MHwp2I-hyiqatD4nOdn1bblEnTh2Jot36N0WCkMy2vW3hE-CMLnhjTIgQT-QReUqWIJ7NpbHlmbJUFLSFfS3vu6CGaeBGnRyNJWFftJiUCbkwS9I3xzWRoNNdM6ONGFMQI7n1rZ1JMpBTlOmUpTPHq0cqLAj_d6Q-pGXk2o5akiab4Vwnj61-zfQl_5RH4w3W74KFysacfYij4d4MXe2ggtnKvXTX_ZQqR0E');">
+          </div>
+          <div class="flex-1">
+            <div class="flex justify-between items-center">
+              <p class="text-sm font-bold text-slate-900 dark:text-white">Analyst B2</p>
+              <span class="size-2 rounded-full bg-green-500 animate-pulse"></span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Compiling dataset patterns...</p>
+          </div>
+        </div>
+      </div>
+      <!-- Shared Resources Context -->
+      <div class="mt-6">
+        <h4 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Shared Context
+        </h4>
+        <div class="flex flex-wrap gap-2">
+          <span
+            class="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary text-xs font-medium">Q3_Financials.pdf</span>
+          <span
+            class="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary text-xs font-medium">Competitor_Analysis_v2</span>
+          <span
+            class="px-3 py-1 rounded-lg bg-gray-100 dark:bg-white/5 border border-transparent text-slate-500 dark:text-slate-400 text-xs font-medium">+
+            3 more</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+  <script src="../phoenix-loader.js"></script>
+  <script>
+    async function loadGraphData() {
+      // Fetch status
+      const lat = await window.phoenixAPI.checkLatency();
+      const notificationDot = document.querySelector('.bg-hot.rounded-full.border');
+
+      if (lat < 2000) {
+        // If connected, maybe make the notification dot green?
+        if (notificationDot) {
+          notificationDot.classList.remove('bg-hot');
+          notificationDot.classList.add('bg-emerald-500');
+        }
+      } else {
+        if (notificationDot) {
+          notificationDot.classList.add('bg-hot');
+          notificationDot.classList.remove('bg-emerald-500');
+        }
+      }
+    }
+    loadGraphData();
+    setInterval(loadGraphData, 5000);
+  </script>
+</body>
+
+</html>

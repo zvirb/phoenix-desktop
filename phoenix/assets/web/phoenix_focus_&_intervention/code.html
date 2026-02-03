@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-white min-h-screen">
+    <div
+        class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-[430px] mx-auto shadow-2xl border-x border-white/5 bg-background-light dark:bg-background-dark">
+        <!-- TopAppBar -->
+        <div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between">
+            <div class="text-primary flex size-12 shrink-0 items-center justify-center">
+                <span class="material-symbols-outlined text-3xl">flare</span>
+            </div>
+            <h2
+                class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12 font-display">
+                Phoenix Focus</h2>
+        </div>
+        <!-- Voice Service Status Indicator -->
+        <div class="px-4 py-2 flex justify-end">
+            <div
+                class="flex items-center gap-2 bg-slate-200/50 dark:bg-slate-800/50 px-3 py-1.5 rounded-full border border-primary/20">
+                <div class="relative flex h-2 w-2">
+                    <span class="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </div>
+                <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Listening</span>
+            </div>
+        </div>
+        <!-- Section Header -->
+        <div class="px-4 pt-4">
+            <h3 class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] font-display">
+                Focus Reflection</h3>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">Your productivity snapshot for today.</p>
+        </div>
+        <!-- Stats Grid -->
+        <div class="flex flex-wrap gap-4 p-4">
+            <div
+                class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-primary text-xl">bolt</span>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm font-medium leading-normal">Deep Work</p>
+                </div>
+                <p class="text-slate-900 dark:text-white tracking-light text-2xl font-bold leading-tight">4.5 hrs</p>
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[#0bda5e] text-sm">trending_up</span>
+                    <p class="text-[#0bda5e] text-xs font-bold leading-normal">+15% vs yesterday</p>
+                </div>
+            </div>
+            <div
+                class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-primary text-xl">waves</span>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm font-medium leading-normal">Flow State</p>
+                </div>
+                <p class="text-slate-900 dark:text-white tracking-light text-2xl font-bold leading-tight">2 sessions</p>
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[#0bda5e] text-sm">check_circle</span>
+                    <p class="text-[#0bda5e] text-xs font-bold leading-normal">+1 streak</p>
+                </div>
+            </div>
+        </div>
+        <!-- Progress Bar / Goal -->
+        <div class="flex flex-col gap-3 p-4 mx-4 mb-6 rounded-xl bg-primary/5 border border-primary/10">
+            <div class="flex gap-6 justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">target</span>
+                    <p class="text-slate-800 dark:text-white text-base font-semibold leading-normal">Daily Focus Goal
+                    </p>
+                </div>
+                <p class="text-primary text-sm font-bold leading-normal">6h 30m</p>
+            </div>
+            <div class="rounded-full bg-slate-200 dark:bg-slate-800 h-3 overflow-hidden">
+                <div class="h-full rounded-full bg-primary" style="width: 75%;"></div>
+            </div>
+            <p class="text-slate-500 dark:text-[#9da6b8] text-xs font-medium leading-normal">75% of your daily goal
+                achieved</p>
+        </div>
+        <!-- Intervention Section Divider -->
+        <div class="px-4 pb-2">
+            <div class="h-px w-full bg-slate-200 dark:bg-slate-800"></div>
+        </div>
+        <!-- Intervention Card -->
+        <div class="p-4 @container">
+            <div
+                class="flex flex-col items-stretch justify-start rounded-xl overflow-hidden border border-orange-500/30 bg-orange-50/50 dark:bg-orange-500/10 shadow-lg">
+                <div class="flex w-full min-w-72 grow flex-col items-stretch justify-center gap-3 p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-orange-500 p-2 rounded-lg flex items-center justify-center">
+                            <span class="material-symbols-outlined text-white">warning</span>
+                        </div>
+                        <div>
+                            <p
+                                class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">
+                                Doomscrolling Detected</p>
+                            <p class="text-orange-700 dark:text-orange-400 text-xs font-semibold">GENTLE NUDGE</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-4">
+                        <p class="text-slate-600 dark:text-[#9da6b8] text-sm font-normal leading-relaxed">
+                            You've been on social media for 20 minutes. Ready to jump back into your <span
+                                class="text-primary font-bold">Phoenix Reflection</span> deep work session?
+                        </p>
+                        <div class="flex gap-3">
+                            <button
+                                class="flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal transition-all hover:bg-primary/90">
+                                <span class="truncate">Block Distractions</span>
+                            </button>
+                            <button
+                                class="flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-bold leading-normal">
+                                <span class="truncate">5m More</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Context Insight Footer Card -->
+        <div class="p-4">
+            <div
+                class="rounded-xl p-4 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                <div class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary">lightbulb</span>
+                </div>
+                <div>
+                    <p class="text-slate-900 dark:text-white text-sm font-bold">Phoenix Insight</p>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs italic">"You are most productive in the
+                        mornings between 9-11 AM."</p>
+                </div>
+            </div>
+        </div>
+        <!-- Navigation Bar Spacer for iOS -->
+        <div class="h-10 bg-background-light dark:bg-background-dark"></div>
+    </div>
+    <script src="../phoenix-loader.js"></script>
+    <script>
+        async function loadFocusData() {
+            // Here we could fetch real focus stats if the API existed
+            // For now, we'll just check latency to show connectivity
+            const lat = await window.phoenixAPI.checkLatency();
+            if (lat < 2000) {
+                // Update UI to show connected
+                const listening = document.querySelector('.text-xs.font-medium.text-slate-700.dark\\:text-slate-300');
+                if (listening) listening.innerHTML = `Listening <span class="text-emerald-500">(${lat}ms)</span>`;
+            }
+        }
+        loadFocusData();
+    </script>
+    </div>
+</body>
+
+</html>

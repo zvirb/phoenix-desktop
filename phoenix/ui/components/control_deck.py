@@ -7,6 +7,7 @@ class ControlDeck(QFrame):
     """
     war_room_toggled = pyqtSignal(bool)
     no_distractions_toggled = pyqtSignal(bool)
+    mission_control_clicked = pyqtSignal()
     # Alias for newer consumers
     zen_mode_toggled = no_distractions_toggled
 
@@ -95,7 +96,25 @@ class ControlDeck(QFrame):
         btn_layout.addWidget(self.btn_war_room)
         btn_layout.addWidget(self.btn_distractions)
         
+        # Mission Control Button
+        self.btn_mission = QPushButton("MISSION CONTROL")
+        self.btn_mission.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_mission.setStyleSheet("""
+            QPushButton {
+                background-color: #2e3b55;
+                color: #e2e8f0;
+                font-weight: 800;
+                border-radius: 6px;
+                padding: 12px;
+                font-size: 11px;
+                border: 1px solid #475569;
+            }
+            QPushButton:hover { background-color: #475569; }
+        """)
+        self.btn_mission.clicked.connect(self.mission_control_clicked.emit)
+        
         layout.addLayout(btn_layout)
+        layout.addWidget(self.btn_mission)
 
     def _on_war_room_toggled(self, checked):
         if checked:

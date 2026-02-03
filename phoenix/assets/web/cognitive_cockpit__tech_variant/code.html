@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Phoenix // Deep Dive</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1f68f9",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#0f1623",
+                        "surface-dark": "#1a2230",
+                        "border-dark": "#3a4355",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom Hexagon Shape */
+        .hexagon-clip {
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased overflow-x-hidden min-h-screen flex flex-col">
+    <!-- Top App Bar -->
+    <div
+        class="sticky top-0 z-50 bg-background-light dark:bg-background-dark/95 backdrop-blur-sm border-b dark:border-border-dark border-slate-200">
+        <div class="flex items-center p-4 justify-between max-w-lg mx-auto w-full">
+            <button
+                class="text-slate-900 dark:text-white flex size-12 shrink-0 items-center justify-start hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-3xl">menu</span>
+            </button>
+            <h2
+                class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center uppercase">
+                Phoenix // Deep Dive</h2>
+            <div class="flex w-12 items-center justify-end">
+                <button
+                    class="flex items-center justify-center rounded-lg text-slate-900 dark:text-white hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">settings</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="flex-1 flex flex-col max-w-lg mx-auto w-full">
+        <!-- Stats Section -->
+        <div class="flex flex-wrap gap-3 p-4">
+            <div
+                class="flex min-w-[100px] flex-1 flex-col gap-1 rounded-lg p-4 border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark shadow-sm">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-sm">wifi</span>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Status
+                    </p>
+                </div>
+                <p class="text-slate-900 dark:text-white text-xl font-bold leading-tight">Online</p>
+            </div>
+            <div
+                class="flex min-w-[100px] flex-1 flex-col gap-1 rounded-lg p-4 border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark shadow-sm">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-sm">speed</span>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Latency
+                    </p>
+                </div>
+                <p class="text-primary text-xl font-bold leading-tight"><span id="sys-latency">--</span>ms</p>
+            </div>
+            <div
+                class="flex min-w-[100px] flex-1 flex-col gap-1 rounded-lg p-4 border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark shadow-sm">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-sm">timer</span>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Uptime
+                    </p>
+                </div>
+                <p class="text-slate-900 dark:text-white text-xl font-bold leading-tight">04:20</p>
+            </div>
+        </div>
+        <!-- Central Waveform Card -->
+        <div class="px-4 pb-4 w-full">
+            <div
+                class="flex flex-col items-stretch justify-start rounded-xl border border-slate-200 dark:border-border-dark overflow-hidden bg-white dark:bg-surface-dark shadow-lg">
+                <div class="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
+                    <!-- Background Grid -->
+                    <div class="absolute inset-0 opacity-20"
+                        style="background-image: radial-gradient(#1f68f9 1px, transparent 1px); background-size: 20px 20px;">
+                    </div>
+                    <!-- Main Waveform Visual -->
+                    <div class="w-full h-full bg-center bg-cover opacity-80"
+                        data-alt="Neon blue abstract audio waveform visualization on dark background"
+                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAgEk-_wbEzn3dR44YUOaXhbKEEq19lskaGQzv-v0qfSeKHXWHWk0wuZReWPrzfr5UBd7eynCepeh5m4iRHbipCMRK0q3nA-ikVfPhduhP_GKipoTEcYgyMR-xXJCRV-rFQmTZBeXr6egWEtijwnJyEv6brRspbbJABs2tOayYFlu9Rm7BkKKYhG9bCHMu3iktalLdS4N9nXK8UYjSM0A-7Nidmv5qHzlbWnWln-oJAtLkC6gAFMOtnJUnKdMz4zE2c1QMGmLQaudg");'>
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-surface-dark via-transparent to-transparent">
+                    </div>
+                    <div class="absolute bottom-4 left-4 flex items-center gap-2">
+                        <span class="relative flex h-3 w-3">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                        </span>
+                        <span class="text-primary text-xs font-bold uppercase tracking-widest">Live Feed</span>
+                    </div>
+                </div>
+                <div class="flex w-full flex-col gap-2 p-5">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">Audio
+                            Stream Analysis</h3>
+                        <span class="material-symbols-outlined text-slate-400">graphic_eq</span>
+                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full overflow-hidden">
+                        <div class="bg-primary h-full w-2/3 shadow-[0_0_10px_rgba(31,104,249,0.8)]"></div>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal font-body">
+                        Processing input vector 74-Alpha...</p>
+                </div>
+            </div>
+        </div>
+        <!-- Physical Toggles -->
+        <div class="px-4 py-2">
+            <div
+                class="flex items-center justify-between gap-4 bg-slate-100 dark:bg-black/20 p-2 rounded-xl border border-slate-200 dark:border-border-dark">
+                <button
+                    class="flex-1 flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-lg bg-primary text-white shadow-lg shadow-primary/20 border border-primary/50 transition-all active:scale-95">
+                    <span class="material-symbols-outlined text-xl">visibility</span>
+                    <span class="text-xs font-bold uppercase tracking-wide">Visual</span>
+                </button>
+                <button
+                    class="flex-1 flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-lg bg-transparent text-slate-500 dark:text-slate-400 hover:bg-white/5 border border-transparent hover:border-slate-600 transition-all active:scale-95">
+                    <span class="material-symbols-outlined text-xl">short_text</span>
+                    <span class="text-xs font-bold uppercase tracking-wide">Concise</span>
+                </button>
+                <button
+                    class="flex-1 flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-lg bg-transparent text-slate-500 dark:text-slate-400 hover:bg-white/5 border border-transparent hover:border-slate-600 transition-all active:scale-95">
+                    <span class="material-symbols-outlined text-xl">checklist</span>
+                    <span class="text-xs font-bold uppercase tracking-wide">Step-by-Step</span>
+                </button>
+            </div>
+        </div>
+        <!-- Headline -->
+        <div class="px-4 pt-6 pb-2">
+            <h3
+                class="text-slate-900 dark:text-white tracking-tight text-xl font-bold leading-tight flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">hub</span>
+                Neural Core Selection
+            </h3>
+        </div>
+        <!-- Carousel / Brain Switcher -->
+        <div
+            class="flex overflow-x-auto pb-6 pt-2 px-4 gap-4 [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden snap-x">
+            <!-- Node 1 -->
+            <div class="snap-center shrink-0 w-40 flex flex-col items-center gap-3 group cursor-pointer">
+                <div class="relative w-32 h-32 flex items-center justify-center">
+                    <div
+                        class="absolute inset-0 bg-primary/20 hexagon-clip transform transition-transform group-hover:scale-105">
+                    </div>
+                    <div class="absolute inset-[2px] bg-background-dark hexagon-clip"></div>
+                    <div class="absolute inset-[4px] bg-cover bg-center hexagon-clip opacity-80 group-hover:opacity-100 transition-opacity"
+                        data-alt="Abstract glowing blue neural network node visualization"
+                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBoQx-R6-fv5RhLzEpqGyVIL2zehe4R2htazCijtQ0Kueprv_E5VULfJycF3EqgsndiYyD2SzTc16943lS_xW9VmAFb2gZNrzo-S_Y78GDnyPRkNk6Mdc1wznkRTl05p1CKpB0g4O9w3iJsNnKWzxsQqR-8ljSCDIV3_GbR48-W5CbUDZURiPqsfByxhl83mIPAwY4DkuWboFjL5XTYhvIfDISG3h-iSTxZknHrthMVBO8cxBP33luTMGuNiKo6ew_ZO5-afFjCPWs');">
+                    </div>
+                    <div
+                        class="absolute -bottom-1 -right-1 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-background-dark">
+                        V1.0</div>
+                </div>
+                <div class="text-center">
+                    <p
+                        class="text-slate-900 dark:text-white text-base font-bold leading-tight group-hover:text-primary transition-colors">
+                        Phoenix Prime</p>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-medium mt-1">
+                        Balanced Core</p>
+                </div>
+            </div>
+            <!-- Node 2 -->
+            <div class="snap-center shrink-0 w-40 flex flex-col items-center gap-3 group cursor-pointer">
+                <div class="relative w-32 h-32 flex items-center justify-center">
+                    <div
+                        class="absolute inset-0 bg-slate-600 hexagon-clip transform transition-transform group-hover:scale-105">
+                    </div>
+                    <div class="absolute inset-[2px] bg-background-dark hexagon-clip"></div>
+                    <div class="absolute inset-[4px] bg-cover bg-center hexagon-clip opacity-60 group-hover:opacity-100 transition-opacity grayscale hover:grayscale-0"
+                        data-alt="Detailed computer chip processor close up"
+                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD2B1p1-r_lWtuj9FExjV2uFRLRzgnKTo-dWCVbYfIqYoW3FqswPnRrECNQHTb-U9Ho35fEHcVLGIaJJbK8qvbXF_WpUKybdVpoV8hnyUCoX6dcZS8f4qWY5YfDFYMQhYVqBiPzHYfUXZSRkbc15-k_pHTtz8FlOvalLzc-O_m0YasaaH2Ucg2mEboNV0U5KlRfS2CckcWP9A-W9abETVWg4NJaYTGSJ-QHyYGYdPt-Y21FKCz_RQXMUBMgrjNPP_GNmNGAXxS8N6Y');">
+                    </div>
+                </div>
+                <div class="text-center">
+                    <p
+                        class="text-slate-900 dark:text-white text-base font-bold leading-tight group-hover:text-primary transition-colors">
+                        Logic Engine</p>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-medium mt-1">
+                        Analytical</p>
+                </div>
+            </div>
+            <!-- Node 3 -->
+            <div class="snap-center shrink-0 w-40 flex flex-col items-center gap-3 group cursor-pointer">
+                <div class="relative w-32 h-32 flex items-center justify-center">
+                    <div
+                        class="absolute inset-0 bg-slate-600 hexagon-clip transform transition-transform group-hover:scale-105">
+                    </div>
+                    <div class="absolute inset-[2px] bg-background-dark hexagon-clip"></div>
+                    <div class="absolute inset-[4px] bg-cover bg-center hexagon-clip opacity-60 group-hover:opacity-100 transition-opacity grayscale hover:grayscale-0"
+                        data-alt="Abstract colorful generative art explosion"
+                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDL5lRchB4U4yIK5ThM5zCtuDzBRm3DF0PXKNs2ysc-Bh38IVGyeFO6QCAtyBRIdLGHu5kz07aClg4Sw8pmefHd9RyrEpDR_-MIWTAdyUf8KQYdGCzV9pmygxxHOmagq1CYd_n36VcfsCrqug6b7YsQlrQnZdmHESEmK5nmYe4Qq-9ObWfQGOZgx_NNjFo-KqRWUrQzh0-KsZXasDiPAw1l5auVhpmbuBoy-09V3Lq9P6Gkk75_eFYmcFXTzpc1i909ucDxBh0Wkjk');">
+                    </div>
+                </div>
+                <div class="text-center">
+                    <p
+                        class="text-slate-900 dark:text-white text-base font-bold leading-tight group-hover:text-primary transition-colors">
+                        Creative Spark</p>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-medium mt-1">
+                        Generative</p>
+                </div>
+            </div>
+            <!-- Node 4 (Spacer for scrolling) -->
+            <div class="w-2 shrink-0"></div>
+        </div>
+    </div>
+    </div>
+    <div class="h-6"></div>
+    <script src="../phoenix-loader.js"></script>
+    <script>
+        async function loadCockpitData() {
+            const lat = await window.phoenixAPI.checkLatency();
+            window.updateElement('sys-latency', lat);
+        }
+        loadCockpitData();
+        setInterval(loadCockpitData, 2000);
+    </script>
+</body>
+
+</html>

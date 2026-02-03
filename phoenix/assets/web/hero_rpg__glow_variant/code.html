@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Phoenix Progress - Glow Variant</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&amp;display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2b2bee",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101022",
+                        "surface-dark": "#16162a",
+                        "glow": "#4d4dff"
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+                    boxShadow: {
+                        'glow': '0 0 20px rgba(43, 43, 238, 0.5)',
+                        'glow-sm': '0 0 10px rgba(43, 43, 238, 0.3)',
+                        'inner-glow': 'inset 0 0 20px rgba(43, 43, 238, 0.1)'
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for horizontal sections */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Subtle pulse animation for the main glow */
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
+        }
+
+        .animate-pulse-glow {
+            animation: pulse-glow 4s ease-in-out infinite;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased selection:bg-primary selection:text-white">
+    <div
+        class="relative flex h-full min-h-screen w-full flex-col overflow-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark">
+        <!-- Background Ambient Glow -->
+        <div
+            class="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] -z-10 pointer-events-none">
+        </div>
+        <!-- Top App Bar -->
+        <div class="flex items-center px-4 pt-6 pb-2 justify-between z-10">
+            <div
+                class="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-dark/50 backdrop-blur-md text-white border border-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+                <span class="material-symbols-outlined text-xl">arrow_back</span>
+            </div>
+            <h2 class="text-white text-lg font-bold leading-tight tracking-wide uppercase text-center drop-shadow-md">
+                Phoenix</h2>
+            <div
+                class="flex size-10 items-center justify-center rounded-full bg-surface-dark/50 backdrop-blur-md text-white border border-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+                <span class="material-symbols-outlined text-xl">settings</span>
+            </div>
+        </div>
+        <!-- Main Progress Glow Section -->
+        <div class="relative flex flex-col items-center justify-center py-10 px-4">
+            <h1 class="text-white text-3xl font-bold tracking-tight mb-2">Cognitive Sync</h1>
+            <p class="text-[#9d9db9] text-sm font-medium tracking-wide uppercase mb-8">Daily Resonance Check</p>
+            <!-- Glowing Orb Visualization -->
+            <div class="relative flex items-center justify-center size-64">
+                <!-- Outer Rings -->
+                <div class="absolute inset-0 rounded-full border border-primary/20 scale-110"></div>
+                <div class="absolute inset-0 rounded-full border border-primary/10 scale-125 border-dashed"></div>
+                <!-- Main Glow Body -->
+                <div
+                    class="absolute inset-0 bg-gradient-to-tr from-primary/40 to-purple-500/40 rounded-full blur-xl animate-pulse-glow">
+                </div>
+                <!-- Inner Circle Backdrop -->
+                <div
+                    class="relative z-10 flex flex-col items-center justify-center size-52 bg-surface-dark/80 backdrop-blur-xl rounded-full border border-white/10 shadow-glow">
+                    <span
+                        class="text-6xl font-bold text-white tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">92%</span>
+                    <span class="text-primary text-sm font-bold mt-1 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">trending_up</span> +5%
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- Chart Section -->
+        <div class="px-6 py-2">
+            <div class="flex justify-between items-end mb-4">
+                <h3 class="text-white text-lg font-bold">Flow State Trend</h3>
+                <div class="flex gap-2 text-xs font-bold bg-surface-dark p-1 rounded-lg border border-white/5">
+                    <button class="px-3 py-1 rounded-md bg-primary text-white shadow-glow-sm">W</button>
+                    <button class="px-3 py-1 rounded-md text-[#9d9db9] hover:bg-white/5 transition">M</button>
+                    <button class="px-3 py-1 rounded-md text-[#9d9db9] hover:bg-white/5 transition">Y</button>
+                </div>
+            </div>
+            <div
+                class="relative w-full h-32 bg-surface-dark/30 rounded-2xl border border-white/5 p-4 overflow-hidden backdrop-blur-sm">
+                <!-- Background Grid Lines -->
+                <div class="absolute inset-0 flex flex-col justify-between py-4 px-4 opacity-10 pointer-events-none">
+                    <div class="border-b border-white w-full"></div>
+                    <div class="border-b border-white w-full"></div>
+                    <div class="border-b border-white w-full"></div>
+                </div>
+                <!-- Custom SVG Chart with Glow -->
+                <svg class="relative z-10 w-full h-full overflow-visible" preserveaspectratio="none"
+                    viewbox="0 0 300 100">
+                    <defs>
+                        <lineargradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stop-color="#2b2bee" stop-opacity="0.5"></stop>
+                            <stop offset="100%" stop-color="#2b2bee" stop-opacity="0"></stop>
+                        </lineargradient>
+                        <filter height="140%" id="glow" width="140%" x="-20%" y="-20%">
+                            <fegaussianblur result="coloredBlur" stddeviation="3"></fegaussianblur>
+                            <femerge>
+                                <femergenode in="coloredBlur"></femergenode>
+                                <femergenode in="SourceGraphic"></femergenode>
+                            </femerge>
+                        </filter>
+                    </defs>
+                    <path d="M0 80 C 40 80, 50 60, 80 50 S 120 70, 150 40 S 200 60, 240 30 S 280 10, 300 10 V 100 H 0 Z"
+                        fill="url(#chartGradient)"></path>
+                    <path d="M0 80 C 40 80, 50 60, 80 50 S 120 70, 150 40 S 200 60, 240 30 S 280 10, 300 10" fill="none"
+                        filter="url(#glow)" stroke="#60a5fa" stroke-linecap="round" stroke-width="3"></path>
+                    <!-- Data Points as Glowing Dots -->
+                    <circle cx="80" cy="50" fill="white" filter="url(#glow)" r="3"></circle>
+                    <circle cx="150" cy="40" fill="white" filter="url(#glow)" r="3"></circle>
+                    <circle cx="240" cy="30" fill="white" filter="url(#glow)" r="3"></circle>
+                </svg>
+            </div>
+        </div>
+        <!-- Quests Checklist -->
+        <div class="flex-1 px-6 py-6 pb-24">
+            <h3 class="text-white text-lg font-bold mb-4">Daily Quests</h3>
+            <div id="glow-quest-list" class="flex flex-col gap-3">
+                <div class="text-sm text-[#9d9db9] animate-pulse">Loading quests...</div>
+            </div>
+        </div>
+        <!-- Floating Achievements / Seals (Bottom Overlay) -->
+        <div
+            class="absolute bottom-6 left-6 right-6 h-20 bg-surface-dark/90 backdrop-blur-md rounded-2xl border border-white/10 flex items-center px-4 justify-between shadow-lg z-20">
+            <div class="flex flex-col">
+                <span class="text-xs text-[#9d9db9] font-bold uppercase tracking-wider mb-1">Recent Seals</span>
+                <span class="text-white font-bold text-sm">3 Unlocked</span>
+            </div>
+            <div class="flex -space-x-3">
+                <!-- Seal 1 -->
+                <div
+                    class="relative size-10 rounded-full bg-[#1e1e2e] border-2 border-surface-dark flex items-center justify-center text-gray-400 group hover:-translate-y-1 transition-transform">
+                    <span class="material-symbols-outlined text-lg">military_tech</span>
+                    <div class="absolute inset-0 bg-white/5 rounded-full"></div>
+                </div>
+                <!-- Seal 2 -->
+                <div
+                    class="relative size-10 rounded-full bg-[#2a2a3e] border-2 border-surface-dark flex items-center justify-center text-white shadow-[0_0_10px_rgba(255,255,255,0.2)] z-10 hover:-translate-y-1 transition-transform">
+                    <span class="material-symbols-outlined text-lg">verified</span>
+                </div>
+                <!-- Seal 3 (Active Glow) -->
+                <div
+                    class="relative size-10 rounded-full bg-primary border-2 border-surface-dark flex items-center justify-center text-white shadow-glow z-20 hover:-translate-y-1 transition-transform">
+                    <span class="material-symbols-outlined text-lg">hotel_class</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <script src="../phoenix-loader.js"></script>
+    <script>
+        async function loadGlowData() {
+            try {
+                const data = await window.phoenixAPI.getGamificationProfile();
+                if (data && data.profile) {
+                    const p = data.profile;
+                    window.updateElement('level-display', `Level ${p.level}`);
+
+                    let progress = 0;
+                    if (p.points_to_next_level > 0) {
+                        progress = Math.round((p.total_points / p.points_to_next_level) * 100);
+                        if (progress > 100) progress = 100;
+                    }
+                    window.updateElement('xp-percent', `${progress}%`);
+                }
+
+                // Quests
+                const quests = await window.phoenixAPI.getDailyChallenges();
+                const qList = document.getElementById('glow-quest-list');
+                if (quests && quests.challenges && quests.challenges.length > 0) {
+                    let html = '';
+                    quests.challenges.forEach(q => {
+                        html += `
+                        <label class="group flex items-center gap-4 p-4 rounded-xl bg-surface-dark border border-white/5 transition-all duration-300 hover:bg-surface-dark/80 hover:border-primary/50 hover:shadow-glow-sm cursor-pointer">
+                            <div class="relative flex items-center justify-center">
+                                <input class="peer appearance-none size-6 rounded-full border-2 border-[#3b3b54] bg-transparent checked:bg-primary checked:border-primary focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer group-hover:border-primary/70" type="checkbox" />
+                                <span class="material-symbols-outlined absolute text-white text-sm opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">check</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <p class="text-white text-base font-medium group-hover:text-primary-100 transition-colors">${q.title}</p>
+                                <p class="text-xs text-[#9d9db9] group-hover:text-white/70">Reward: +${q.reward_xp} XP</p>
+                            </div>
+                            <div class="ml-auto">
+                                <span class="material-symbols-outlined text-[#9d9db9] group-hover:text-white transition-colors">chevron_right</span>
+                            </div>
+                        </label>
+                         `;
+                    });
+                    qList.innerHTML = html;
+                } else {
+                    qList.innerHTML = '<div class="text-sm text-[#9d9db9] p-4 text-center">No active quests.</div>';
+                }
+            } catch (e) {
+                console.error("Failed to load RPG Glow data", e);
+            }
+        }
+        loadGlowData();
+        setInterval(loadGlowData, 10000);
+    </script>
+</body>
+
+</html>

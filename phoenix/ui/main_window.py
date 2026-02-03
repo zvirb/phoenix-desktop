@@ -23,6 +23,7 @@ from datetime import datetime
 
 from phoenix.ui.views.onboarding import OnboardingView
 from phoenix.ui.views.settings import SettingsDialog
+from phoenix.ui.views.mission_control import MissionControlWindow
 from phoenix.core.token_manager import TokenManager
 
 logger = logging.getLogger(__name__)
@@ -128,6 +129,20 @@ class MainWindow(QMainWindow):
         
         # Connect Settings
         self.header_hud.settings_btn.clicked.connect(self.on_settings_clicked)
+        
+        # Connect Mission Control
+        self.control_deck.mission_control_clicked.connect(self.on_mission_control_clicked)
+        
+        self.mission_control_window = None
+
+    def on_mission_control_clicked(self):
+        """Open Mission Control Window."""
+        if not self.mission_control_window:
+            self.mission_control_window = MissionControlWindow()
+        
+        self.mission_control_window.show()
+        self.mission_control_window.raise_()
+        self.mission_control_window.activateWindow()
 
     def toggle_audio_recording(self, recording):
         """Called by WaveformWidget when clicked."""

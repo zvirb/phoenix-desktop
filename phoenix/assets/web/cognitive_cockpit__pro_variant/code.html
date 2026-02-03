@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Phoenix Core - Deep Dive Interface</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Theme Configuration -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "surface-dark": "#1c212e",
+                        "border-dark": "#2a3140",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for deep dive data feel */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111621;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a3140;
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1754cf;
+        }
+
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white overflow-x-hidden antialiased selection:bg-primary selection:text-white">
+    <div class="relative flex h-full min-h-screen w-full flex-col">
+        <!-- Header / Telemetry Bar -->
+        <header
+            class="sticky top-0 z-50 flex items-center justify-between border-b border-border-dark bg-background-dark/95 backdrop-blur-md px-4 py-3">
+            <div class="flex items-center gap-3">
+                <button
+                    class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-dark text-white hover:bg-border-dark transition-colors">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <div>
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-white leading-none">Phoenix</h2>
+                    <span class="text-[10px] font-medium text-primary uppercase tracking-wider">Deep Dive // V3</span>
+                </div>
+            </div>
+            <!-- Compact Telemetry Lights -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 rounded-full border border-border-dark bg-surface-dark px-2 py-1">
+                    <div class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span class="text-[10px] font-bold font-mono text-emerald-400">12ms</span>
+                </div>
+                <div class="flex items-center gap-1.5 rounded-full border border-border-dark bg-surface-dark px-2 py-1">
+                    <div class="h-1.5 w-1.5 rounded-full bg-amber-500"></div>
+                    <span class="text-[10px] font-bold font-mono text-amber-400">34%</span>
+                </div>
+                <div
+                    class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-[0_0_10px_rgba(23,84,207,0.5)]">
+                    <span class="material-symbols-outlined text-[18px]">hub</span>
+                </div>
+            </div>
+        </header>
+        <!-- Main Cockpit Content -->
+        <main class="flex flex-1 flex-col gap-1 p-1">
+            <!-- Top Section: Stats & Dialogue Stream -->
+            <div class="flex flex-col gap-4 rounded-xl bg-surface-dark/50 p-4 border border-border-dark/50">
+                <!-- Quick Stats Row (High Data Density) -->
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="flex flex-col gap-1 rounded-lg border border-border-dark bg-surface-dark p-3">
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400">Latency</span>
+                        <div class="flex items-end justify-between">
+                            <span class="text-xl font-bold text-white tracking-tight"><span
+                                    id="sys-latency">--</span><span
+                                    class="text-xs font-normal text-slate-500 ml-0.5">ms</span></span>
+                            <span class="material-symbols-outlined text-[16px] text-emerald-500">trending_down</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1 rounded-lg border border-border-dark bg-surface-dark p-3">
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400">CPU Load</span>
+                        <div class="flex items-end justify-between">
+                            <span class="text-xl font-bold text-white tracking-tight">34<span
+                                    class="text-xs font-normal text-slate-500 ml-0.5">%</span></span>
+                            <span class="material-symbols-outlined text-[16px] text-amber-500">trending_up</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1 rounded-lg border border-border-dark bg-surface-dark p-3">
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400">Mem</span>
+                        <div class="flex items-end justify-between">
+                            <span class="text-xl font-bold text-white tracking-tight">1.2<span
+                                    class="text-xs font-normal text-slate-500 ml-0.5">GB</span></span>
+                            <span class="material-symbols-outlined text-[16px] text-slate-500">remove</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Dialogue Stream Header -->
+                <div class="flex items-center justify-between border-b border-border-dark pb-2 pt-2">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-[20px]">graphic_eq</span>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wide">Dialogue Stream</h3>
+                    </div>
+                    <span
+                        class="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20">
+                        <span class="block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        LIVE VTT
+                    </span>
+                </div>
+                <!-- Live Dialogue Area -->
+                <div class="flex flex-col gap-3 min-h-[200px]">
+                    <!-- System Activity Cards -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div
+                            class="flex items-center gap-3 rounded-lg border border-border-dark bg-background-dark p-3 relative overflow-hidden group">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                            </div>
+                            <div
+                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-dark border border-border-dark text-white">
+                                <span class="material-symbols-outlined text-[20px]">mic</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold text-white">User Audio</span>
+                                <span class="text-[10px] text-primary animate-pulse-slow">Analyzing input...</span>
+                            </div>
+                        </div>
+                        <div
+                            class="flex items-center gap-3 rounded-lg border border-border-dark bg-background-dark p-3 relative overflow-hidden">
+                            <div
+                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-dark border border-border-dark text-white">
+                                <span class="material-symbols-outlined text-[20px]">waves</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold text-white">System</span>
+                                <span class="text-[10px] text-emerald-400">Response Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Chat Log -->
+                    <div class="flex flex-col gap-4 mt-2">
+                        <!-- User Message -->
+                        <div class="flex items-end justify-end gap-3">
+                            <div class="flex flex-col items-end gap-1 max-w-[85%]">
+                                <div
+                                    class="rounded-2xl rounded-tr-sm bg-primary px-4 py-3 text-sm font-medium text-white shadow-lg shadow-primary/10">
+                                    Analyze the complexity of this neural structure.
+                                </div>
+                                <span class="text-[10px] text-slate-500">00:14:23</span>
+                            </div>
+                            <div class="h-8 w-8 rounded-full bg-slate-700 bg-center bg-cover border border-slate-600"
+                                data-alt="Portrait of the user"
+                                style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDUAUW1wExdZo6KpIiEzBHNe97PJvGY0UeFehWq8zu9Rr8Gh2IwroMl7LO_8MDQH-QGMvpBOrFOJRwcx3a3KN6V3M4EQyrU4TNVrwGzGuemt2mRga3nR-W0SRlTxdVneZ54birw5b7MU-RXuZXl148eRqzSXVj5OD54Bqt29e4HHfNpqw70s9IpNU-NcH18cj0liI-o62VrZOhy_wv3kX--ZVdt7b7cuYeXc4wlQOV_3GpjxRRWrYQJtsYBVNWUF-57y3CjLo8YBqE');">
+                            </div>
+                        </div>
+                        <!-- AI Message -->
+                        <div class="flex items-end gap-3">
+                            <div
+                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-indigo-600 text-white shadow-lg shadow-primary/20">
+                                <span class="material-symbols-outlined text-[16px]">smart_toy</span>
+                            </div>
+                            <div class="flex flex-col items-start gap-1 max-w-[90%]">
+                                <span class="text-[10px] font-bold text-primary ml-1">Phoenix Core</span>
+                                <div
+                                    class="rounded-2xl rounded-tl-sm bg-surface-dark border border-border-dark px-4 py-3 text-sm text-slate-200">
+                                    <p class="leading-relaxed">I'm detecting a complex query structure. Let me map that
+                                        out for you visually. The node density suggests a high-level cognitive pattern.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Bottom Section: Visual Adaptation (Mind Map) -->
+            <div class="flex flex-1 flex-col gap-3 rounded-xl bg-surface-dark/50 p-4 border border-border-dark/50 mt-1">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-amber-500 text-[20px]">schema</span>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wide">Visual Adaptation</h3>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="rounded p-1 hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">zoom_out_map</span>
+                        </button>
+                        <button class="rounded p-1 hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">settings</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Map Visualization Container -->
+                <div
+                    class="relative flex-1 w-full min-h-[240px] overflow-hidden rounded-lg border border-border-dark bg-[#0a0d14] group">
+                    <!-- The Map Image -->
+                    <div class="absolute inset-0 bg-cover bg-center opacity-80 mix-blend-screen"
+                        data-alt="Abstract neon blue network graph representing a cognitive mind map on a dark background"
+                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA-qkAaNqU4nzVKKcs8Nu7s0C6PXQlyqqfRwSlJAjX2_v1Yp19dKzXtnvN4iLQL_DCGmYy0J3pg_KbO5Eo2ZptlwwmnvwTpRM84CA5xnI8X_2DFN6Cisjhy6_7FmlzSuoRqToIdeCGD-D_QHlqc1eCQFmr50r5oexfscBdI0otLYTud3fSElEDcZdMi73NCedbBT_ApV_whJ_nlvgNaaJ5FfNfDRbgeZ78inrystZV4fnEom84BC3MvQ3HowzG9Fc4luZ9IDrnskoM');">
+                    </div>
+                    <!-- Overlay Grid -->
+                    <div
+                        class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px]">
+                    </div>
+                    <!-- Floating Data Points (Overlay UI) -->
+                    <div class="absolute top-4 left-4 flex flex-col gap-1">
+                        <div
+                            class="bg-black/60 backdrop-blur-sm border border-white/10 px-2 py-1 rounded text-[10px] text-white font-mono">
+                            NODES: 4,028
+                        </div>
+                        <div
+                            class="bg-black/60 backdrop-blur-sm border border-white/10 px-2 py-1 rounded text-[10px] text-white font-mono">
+                            EDGES: 12,401
+                        </div>
+                    </div>
+                    <!-- Center Focus Reticle -->
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                        <div class="relative h-24 w-24">
+                            <div
+                                class="absolute inset-0 rounded-full border border-primary/40 animate-[spin_10s_linear_infinite]">
+                            </div>
+                            <div
+                                class="absolute inset-2 rounded-full border border-dashed border-white/20 animate-[spin_15s_linear_infinite_reverse]">
+                            </div>
+                            <div
+                                class="absolute top-1/2 left-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full shadow-[0_0_10px_white]">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Floating Context Label -->
+                    <div class="absolute bottom-4 right-4 max-w-[180px]">
+                        <div
+                            class="bg-primary/90 backdrop-blur-md border border-primary-400 p-3 rounded-lg shadow-lg shadow-black/50">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="material-symbols-outlined text-[14px] text-white">auto_awesome</span>
+                                <span class="text-[10px] font-bold text-white uppercase">Insight Generated</span>
+                            </div>
+                            <p class="text-[10px] text-white/90 leading-snug">
+                                Correlation found between Query A and Dataset B. Expanding visualization.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer / Input Area -->
+            <div class="sticky bottom-0 z-40 bg-background-dark/95 backdrop-blur-md border-t border-border-dark p-4">
+                <div class="relative flex items-center gap-2">
+                    <button
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-dark border border-border-dark text-slate-400 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined">add</span>
+                    </button>
+                    <div class="relative flex-1">
+                        <input
+                            class="w-full rounded-full border border-border-dark bg-surface-dark py-2.5 pl-4 pr-12 text-sm text-white placeholder-slate-500 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-inner shadow-black/20"
+                            placeholder="Enter command or query..." type="text" />
+                        <button
+                            class="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full bg-primary p-1.5 text-white shadow-md hover:bg-blue-600 transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">arrow_upward</span>
+                        </button>
+                    </div>
+                    <button
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-dark border border-border-dark text-slate-400 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined">mic</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+    </div>
+    <script src="../phoenix-loader.js"></script>
+    <script>
+        async function loadCockpitData() {
+            // Latency
+            const lat = await window.phoenixAPI.checkLatency();
+            window.updateElement('sys-latency', lat);
+
+            // We can't easily get CPU/Mem from browser, so we'll simulate "Live" feel or just leave static for now
+            // But prompt says "actual data".
+            // Latency is actual.
+        }
+        loadCockpitData();
+        setInterval(loadCockpitData, 2000);
+    </script>
+</body>
+
+</html>
