@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Phoenix War Room</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#1754cf",
+            "background-light": "#f6f6f8",
+            "background-dark": "#111621",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+          backgroundImage: {
+            'grid-pattern': "linear-gradient(to right, #2a2f3a 1px, transparent 1px), linear-gradient(to bottom, #2a2f3a 1px, transparent 1px)",
+          }
+        },
+      },
+    }
+  </script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+  <style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white font-display overflow-x-hidden">
+  <div class="relative flex h-full min-h-screen w-full flex-col overflow-hidden">
+    <!-- Header -->
+    <div
+      class="sticky top-0 z-20 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md p-4 pb-2 justify-between border-b border-[#e5e7eb] dark:border-[#292e38]">
+      <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span class="material-symbols-outlined text-2xl">grid_view</span>
+      </div>
+      <div class="flex flex-col flex-1 pl-4">
+        <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">War Room</h2>
+        <p class="text-xs text-[#6b7280] dark:text-[#9da6b8] font-medium">Phoenix Orchestration</p>
+      </div>
+      <div class="flex w-12 items-center justify-end">
+        <button
+          class="flex items-center justify-center size-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+          <span class="material-symbols-outlined text-[#6b7280] dark:text-[#9da6b8]">filter_list</span>
+        </button>
+      </div>
+    </div>
+    <!-- Tabs -->
+    <div class="bg-background-light dark:bg-background-dark z-10 pt-2">
+      <div class="flex border-b border-[#e5e7eb] dark:border-[#3c4453] px-4 justify-between">
+        <a class="flex flex-col items-center justify-center border-b-[3px] border-b-primary text-primary pb-[13px] pt-2 flex-1 transition-colors"
+          href="#">
+          <p class="text-sm font-bold leading-normal tracking-[0.015em]">Active Rooms</p>
+        </a>
+        <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#6b7280] dark:text-[#9da6b8] hover:text-[#111318] dark:hover:text-white pb-[13px] pt-2 flex-1 transition-colors"
+          href="#">
+          <p class="text-sm font-bold leading-normal tracking-[0.015em]">Archived</p>
+        </a>
+      </div>
+    </div>
+    <!-- Main Content Area with Grid Background -->
+    <div
+      class="flex-1 w-full bg-background-light dark:bg-background-dark bg-[size:24px_24px] dark:bg-grid-pattern pb-24 relative">
+      <!-- Grid -->
+      <div class="grid grid-cols-2 gap-4 p-4">
+        <!-- Card 1 -->
+        <div
+          class="group flex flex-col gap-3 p-3 bg-white dark:bg-[#1c1f26] rounded-xl shadow-sm border border-[#e5e7eb] dark:border-[#292e38] hover:border-primary/50 transition-all">
+          <div class="relative w-full aspect-[4/3] rounded-lg overflow-hidden">
+            <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+              data-alt="Abstract 3D geometric blue nodes network"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCUcJQKM5swTbuAa1IwROwyC5nxORsAJ_wtcxci0MRIuaiHHHkh1vpnHlkO2MtEFgUva1wecSAfmrD2iClfuiv8MphR092KXatJYKFaCRbBGq_p56nsLzO9tVgjL1z6j3CZGdLyIZSBzdoXThzM0Nyo_SH7uOhRkKckuSgnz4X0m-xY59fYYFYa7tYYn_R0kZoqWdjQcoCbSaRcUNflYBHtd0JFhSWxkQhrZldDclrMNkcT7G0uEuGEL1D-JXErEaDADvUXztJOEnk");'>
+            </div>
+            <div
+              class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10">
+              <p class="text-[10px] font-bold text-white uppercase tracking-wider">High Priority</p>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p class="text-[#111318] dark:text-white text-base font-bold leading-tight">Project Phoenix</p>
+            <div class="flex items-center gap-1.5 text-primary text-xs font-semibold">
+              <span class="material-symbols-outlined text-[14px]">bolt</span>
+              <span>Active Phase</span>
+            </div>
+          </div>
+          <div class="mt-auto pt-2 border-t border-[#f3f4f6] dark:border-[#292e38] flex items-center justify-between">
+            <div class="flex -space-x-2">
+              <img alt="Human Avatar" class="inline-block size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26]"
+                data-alt="Portrait of a young woman with glasses"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOPYXw3k8vjwxtK1zi7wTq41ppcudvF-45Q4KClsRSlbQYrXXOCRx7NfLDE9dIpRe9fqJfFMyw2xwyt1liyP5bOrKInVOZwDCkKt9-F9yaV_05rL3RQrWm5D0d8J-fQCGaPDcW27PY7_-6BufYJNO5M83_pSCP8YujwFcQTa1RGZNY0nWwdW4AWu1K56Ub80mk4435frbpEGyhRh1Lg4nWj1aX2EtvFx4TGCCukmEnJOD4YQM9MjQiLugBtVhK4Ifycs4amatO1iE" />
+              <img alt="Human Avatar" class="inline-block size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26]"
+                data-alt="Portrait of a man looking forward"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDa7xWb9YE5NAklJT1GK8FzZVjK10tTJaccGGFl8E0za9Y4QmczPDgKtSrAI0gJf6GNZdpOx5cAo3tCQFVH0P6eEC0XIjmUvOd2Mv4oBwqZBoS2OeI_UaFTSNcV0SY0zurLJJqoaUoGCwpT2QOZ-_w49E7TddL2nH8ndmR1ssik14MrYmnkATHGo3S2lpFlsN6avKAL39CMJ7XACFfQHbOjBPcffSkrPpGtcVZG2m4R69VD3nHjzS1xWyYnJaN6JyH1fFa1UGoD50" />
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-primary text-[10px] text-white font-bold">
+                A</div>
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-[#2a2f3a] text-[9px] text-white border border-[#3c4453]">
+                +12</div>
+            </div>
+          </div>
+        </div>
+        <!-- Card 2 -->
+        <div
+          class="group flex flex-col gap-3 p-3 bg-white dark:bg-[#1c1f26] rounded-xl shadow-sm border border-[#e5e7eb] dark:border-[#292e38] hover:border-primary/50 transition-all">
+          <div class="relative w-full aspect-[4/3] rounded-lg overflow-hidden">
+            <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+              data-alt="Cybersecurity digital data stream green matrix"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDZU_xL_Smst_0h44IO4f70p5g9QPUWSrWMxxz5aoOu8lhlny6UaFab2Q1cnXczYQuzLGdBJeCgcMd44ZcOvxtR90TVpOGD99OncLdDHImdRoctlKsygw8T8-pGhr_cAdJKleBKuU0u0Q_YmhxIxsAQuiut7_sXK93i5nyDYfmy4Jp_R7ZFAVcinYZNMXP1s1HVs42SAXZuUE6bA8-2wl-0fSnMOa1glJYpmzCGoqZDf95m-ihUxCmL5GpZChmIAHkd_oYLknuA1q4");'>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p class="text-[#111318] dark:text-white text-base font-bold leading-tight">Cyber Ops</p>
+            <div class="flex items-center gap-1.5 text-[#6b7280] dark:text-[#9da6b8] text-xs font-medium">
+              <span class="material-symbols-outlined text-[14px]">shield</span>
+              <span>Defense Mode</span>
+            </div>
+          </div>
+          <div class="mt-auto pt-2 border-t border-[#f3f4f6] dark:border-[#292e38] flex items-center justify-between">
+            <div class="flex -space-x-2">
+              <img alt="Human Avatar" class="inline-block size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26]"
+                data-alt="Portrait of a smiling man"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYcxJbIYpNCEhN6ZcJpWmCQ5o9UzsXHLhkW8hakxhlbEPT9OSO45OYCiW2BONgdr2quEpjg12EkSoVlLtn52YsXBVLUjwFV4xqX2e2c9jUCMvBnGspCCC6mQWTBYfV0h38ciMzjZAYDKbxD_M-oThvbdR1YumHhlDTBlKblL7O4B8oGWk1zjLxDj2XhiSzokQCjcQh3iwnCO4xtHXQkSrW8tyz2mjcoWDf9r0KeD5nQ0ErBJPvVVJhY9AnsTPxa5EJojwyGwQ5Q80" />
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-primary text-[10px] text-white font-bold">
+                B</div>
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-primary text-[10px] text-white font-bold">
+                B</div>
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-[#2a2f3a] text-[9px] text-white border border-[#3c4453]">
+                +6</div>
+            </div>
+          </div>
+        </div>
+        <!-- Card 3 -->
+        <div
+          class="group flex flex-col gap-3 p-3 bg-white dark:bg-[#1c1f26] rounded-xl shadow-sm border border-[#e5e7eb] dark:border-[#292e38] hover:border-primary/50 transition-all">
+          <div class="relative w-full aspect-[4/3] rounded-lg overflow-hidden">
+            <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+              data-alt="Artificial intelligence neural network visualization purple"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuByniQB1bgyrH7rLA3LlaTft0IoQNSmjPPxRwR2RUet58HK7KFGv8O8MNe_-OICm-7o8zVmdINLAPOrz8SAlTDFMJe2s54dHIMeonQumwjOlEMHwqQD6i_3bPatnlA5KE3fCf2P41FN6s9kldgi56Nu4_Oep-FpF8qQYLgdBhB4AaWyvg1GsRMRvR_5ygysnrT5HVzsDA_xthq00RjyyJAJpIAqkYc7T1qxrEn52k7YRBzBtORpm7UdWydYqw0F2ETNMUKMoc44NKg");'>
+            </div>
+            <div
+              class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10">
+              <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Running</p>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p class="text-[#111318] dark:text-white text-base font-bold leading-tight">Neural Net Alpha</p>
+            <div class="flex items-center gap-1.5 text-purple-400 text-xs font-semibold">
+              <span class="material-symbols-outlined text-[14px]">memory</span>
+              <span>Training</span>
+            </div>
+          </div>
+          <div class="mt-auto pt-2 border-t border-[#f3f4f6] dark:border-[#292e38] flex items-center justify-between">
+            <div class="flex -space-x-2">
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-primary text-[10px] text-white font-bold">
+                AI</div>
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-purple-600 text-[10px] text-white font-bold">
+                N</div>
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-[#2a2f3a] text-[9px] text-white border border-[#3c4453]">
+                +24</div>
+            </div>
+          </div>
+        </div>
+        <!-- Card 4 -->
+        <div
+          class="group flex flex-col gap-3 p-3 bg-white dark:bg-[#1c1f26] rounded-xl shadow-sm border border-[#e5e7eb] dark:border-[#292e38] hover:border-primary/50 transition-all">
+          <div class="relative w-full aspect-[4/3] rounded-lg overflow-hidden">
+            <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+              data-alt="Abstract holographic pink and blue gradient shapes"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCwBKWDpjTtIETc1XiVdw2og-RuKGIsmqfY2brQKBvgi1iT9xvPbQyL5Xk6I-XeI0PvQtVtA9VcheqRLOEYx9-LP3HChg6tgNANCIZtXqLtoAp8cVsn8AkRO4lOo4xtAOrGArwKUxGo8pkBxxDDKe5vtoBfkh6iYQwhX9nhf6mZo7JStdu59GsmLhDW__WVigypboCBzsrXplk1R0nifyDchabgA9gR0bzE_9HrmXMw5Ytwee7edtZQm6WhqPQhtmPVEeVL11fsa7A");'>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p class="text-[#111318] dark:text-white text-base font-bold leading-tight">Gamification Logic</p>
+            <div class="flex items-center gap-1.5 text-[#6b7280] dark:text-[#9da6b8] text-xs font-medium">
+              <span class="material-symbols-outlined text-[14px]">sports_esports</span>
+              <span>Design</span>
+            </div>
+          </div>
+          <div class="mt-auto pt-2 border-t border-[#f3f4f6] dark:border-[#292e38] flex items-center justify-between">
+            <div class="flex -space-x-2">
+              <img alt="Human Avatar" class="inline-block size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26]"
+                data-alt="Portrait of a happy woman outdoors"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJXU-_PW_l0Bg-BwrTnwzakOdyiFphDzmddNA2SpDhQvnEs3KA8YmwYqXDBLrLEMym_UrH1Yewg8nE6jF67PxNYX17Zr5-JWaSxDWVN8SllNlqs8IpOqPJsujUAhZ96--hJ6-zTLakKBAHJAffYirVW5wyYs2auaES3FJtOiZAhSeJ_jeNxvyl28LvmsJ_KRbuom-Y15fTiOF3eZsTELYPvIHLKsLIcxUu0T1OUG4Z5quLv3IdWZLQHZenVejF2uxBvu_SKQ5l-jA" />
+              <img alt="Human Avatar" class="inline-block size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26]"
+                data-alt="Portrait of a serious man"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4I3rMrjryP7C3NT9ZZtDNYe0aTt5jMytapBa3_uS-qm4_LdvuOEQUV0NwCwV03XWRCxEjatnyyExUpDgjFQqOMpZgpvyFRtl5Zo8HFH3Y51QzS0ApIAAoPZsu_y7w4ZUVdxVHNQt1BXczr53PTccwS-C7G7gijuDhoURN7hvPZ_oHdvwWqrOUZGymE8H0_MCiyV6kf3IR185fSwi20TONqS5ZJD8WwcLyzA_fFeh_N1dtsNBaZ3N12VS03SuXY9_6q4DCtXkYuAA" />
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-primary text-[10px] text-white font-bold">
+                Bot</div>
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-[#2a2f3a] text-[9px] text-white border border-[#3c4453]">
+                +5</div>
+            </div>
+          </div>
+        </div>
+        <!-- Card 5 -->
+        <div
+          class="group flex flex-col gap-3 p-3 bg-white dark:bg-[#1c1f26] rounded-xl shadow-sm border border-[#e5e7eb] dark:border-[#292e38] hover:border-primary/50 transition-all opacity-80">
+          <div class="relative w-full aspect-[4/3] rounded-lg overflow-hidden">
+            <div class="absolute inset-0 bg-cover bg-center grayscale opacity-60"
+              data-alt="Close up of electronic circuit board"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCUZZzgUf9tavw1ZkhIiBqKhn4elKGAdvu-U97usS_fBb9LUMapaMtxs82KIlbcuDo0mc2V70J33IJE_XWp3y-PrIKQukYVhZrlOH_Zo_TFucRDOo6vIFoAXDw4AMlM7rok9DzOXllys7s_l_DTt3x59Lquy2MgHwvZdU5wekb-ASJ9BCY0PTvLdDI-KMOM8wBUqyRSa5FpqlVjWsbwH0aTgBa31w6lZVxxsjU67yP7vDXYwPTjm5wBl9PLPFEY4HDsunEnfBnTUeg");'>
+            </div>
+            <div class="absolute inset-0 flex items-center justify-center bg-black/40">
+              <span class="material-symbols-outlined text-white text-3xl">lock</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p class="text-[#111318] dark:text-white text-base font-bold leading-tight">Legacy Core</p>
+            <div class="flex items-center gap-1.5 text-[#6b7280] dark:text-[#9da6b8] text-xs font-medium">
+              <span class="material-symbols-outlined text-[14px]">archive</span>
+              <span>Archived</span>
+            </div>
+          </div>
+          <div class="mt-auto pt-2 border-t border-[#f3f4f6] dark:border-[#292e38] flex items-center justify-between">
+            <div class="flex -space-x-2">
+              <div
+                class="inline-flex items-center justify-center size-6 rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-gray-500 text-[10px] text-white font-bold">
+                X</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Floating Action Button (Sculpting) -->
+    <div class="fixed bottom-[80px] left-1/2 transform -translate-x-1/2 z-30">
+      <button
+        class="flex items-center justify-center size-14 rounded-full bg-primary shadow-lg shadow-primary/40 hover:scale-105 active:scale-95 transition-transform text-white group">
+        <span
+          class="material-symbols-outlined text-3xl group-hover:rotate-90 transition-transform duration-300">add</span>
+      </button>
+    </div>
+    <!-- Bottom Navigation -->
+    <div
+      class="fixed bottom-0 w-full z-40 bg-background-light dark:bg-[#1c1f26] border-t border-[#e5e7eb] dark:border-[#292e38] pb- safe-area-bottom">
+      <div class="flex gap-2 px-4 pb-3 pt-2 justify-between">
+        <a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-primary" href="#">
+          <div class="flex h-7 items-center justify-center">
+            <span class="material-symbols-outlined text-[24px] fill-current">table_chart</span>
+          </div>
+          <p class="text-xs font-bold leading-normal tracking-[0.015em]">War Room</p>
+        </a>
+        <a class="flex flex-1 flex-col items-center justify-end gap-1 text-[#6b7280] dark:text-[#9da6b8] hover:text-primary transition-colors"
+          href="#">
+          <div class="flex h-7 items-center justify-center">
+            <span class="material-symbols-outlined text-[24px]">smart_toy</span>
+          </div>
+          <p class="text-xs font-medium leading-normal tracking-[0.015em]">Agents</p>
+        </a>
+        <div class="w-12"></div> <!-- Spacer for FAB -->
+        <a class="flex flex-1 flex-col items-center justify-end gap-1 text-[#6b7280] dark:text-[#9da6b8] hover:text-primary transition-colors"
+          href="#">
+          <div class="flex h-7 items-center justify-center">
+            <span class="material-symbols-outlined text-[24px]">database</span>
+          </div>
+          <p class="text-xs font-medium leading-normal tracking-[0.015em]">Data</p>
+        </a>
+        <a class="flex flex-1 flex-col items-center justify-end gap-1 text-[#6b7280] dark:text-[#9da6b8] hover:text-primary transition-colors"
+          href="#">
+          <div class="flex h-7 items-center justify-center">
+            <span class="material-symbols-outlined text-[24px]">settings</span>
+          </div>
+          <p class="text-xs font-medium leading-normal tracking-[0.015em]">Settings</p>
+        </a>
+      </div>
+    </div>
+  </div>
+  </div>
+  </div>
+  </div>
+  <script src="../phoenix-loader.js"></script>
+  <script>
+    async function loadGridData() {
+      // Fetch status to show "Live" connectivity
+      const lat = await window.phoenixAPI.checkLatency();
+      // Update the header subtitle to show status
+      const headerSub = document.querySelector('.text-xs.text-\\[\\#6b7280\\].dark\\:text-\\[\\#9da6b8\\].font-medium');
+      if (headerSub) {
+        if (lat < 2000) {
+          headerSub.innerHTML = `Phoenix Orchestration <span class="text-emerald-500 font-bold">• ONLINE (${lat}ms)</span>`;
+        } else {
+          headerSub.innerHTML = `Phoenix Orchestration <span class="text-red-500 font-bold">• OFFLINE</span>`;
+        }
+      }
+    }
+    loadGridData();
+    setInterval(loadGridData, 5000);
+  </script>
+</body>
+
+</html>

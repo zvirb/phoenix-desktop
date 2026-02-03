@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hero RPG: Cyber Variant</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#06f957", // Neon Green
+                        "secondary": "#a855f7", // Neon Purple
+                        "background-light": "#f5f8f6",
+                        "background-dark": "#0b1210", // Darker background for cyber feel
+                        "surface-dark": "#16231d",
+                        "cyber-green": "#06f957",
+                        "cyber-purple": "#d946ef",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "mono": ["Space Grotesk", "monospace"] // Using Space Grotesk for mono-feel too as it's techy
+                    },
+                    boxShadow: {
+                        'neon-green': '0 0 10px rgba(6, 249, 87, 0.5), 0 0 20px rgba(6, 249, 87, 0.3)',
+                        'neon-purple': '0 0 10px rgba(217, 70, 239, 0.5), 0 0 20px rgba(217, 70, 239, 0.3)',
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0b1210;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1f3528;
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #06f957;
+        }
+
+        .scanline {
+            background: linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0),
+                    rgba(255, 255, 255, 0) 50%,
+                    rgba(0, 0, 0, 0.1) 50%,
+                    rgba(0, 0, 0, 0.1));
+            background-size: 100% 4px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.15;
+        }
+
+        .cyber-border {
+            position: relative;
+        }
+
+        .cyber-border::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 8px;
+            height: 8px;
+            background-color: currentColor;
+            clip-path: polygon(100% 0, 0 100%, 100% 100%);
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-x-hidden">
+    <!-- Scanline effect overlay -->
+    <div class="scanline"></div>
+    <div class="relative flex min-h-screen w-full flex-col">
+        <!-- TopAppBar -->
+        <header
+            class="sticky top-0 z-40 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-primary/20">
+            <div class="flex items-center px-4 py-3 justify-between">
+                <div
+                    class="flex items-center justify-center size-10 rounded bg-surface-dark border border-primary/30 text-primary">
+                    <span class="material-symbols-outlined">terminal</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <h2 class="text-xs font-mono text-primary/70 tracking-widest uppercase">Orchestration</h2>
+                    <h1 class="text-base font-bold tracking-tight text-white">PHOENIX_CORE // 0X9A</h1>
+                </div>
+                <div class="flex items-center justify-end size-10">
+                    <button
+                        class="flex items-center justify-center size-10 rounded-full hover:bg-surface-dark transition-colors text-white">
+                        <span class="material-symbols-outlined">memory</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Progress Line under header -->
+            <div class="w-full h-[1px] bg-primary/20 relative overflow-hidden">
+                <div class="absolute inset-y-0 left-0 bg-primary w-1/3 animate-[pulse_2s_infinite]"></div>
+            </div>
+        </header>
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col gap-6 p-4 pb-24">
+            <!-- Headline Status -->
+            <section class="mt-2">
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="size-2 rounded-full bg-primary animate-pulse shadow-neon-green"></div>
+                    <span class="text-primary text-xs font-mono tracking-widest">LIVE FEED</span>
+                </div>
+                <h2 class="text-3xl font-bold leading-tight text-white uppercase tracking-tighter">
+                    System Status: <span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">Optimal</span>
+                </h2>
+                <p class="text-gray-400 text-sm mt-1 font-mono">// NEURAL LINK ESTABLISHED</p>
+            </section>
+            <!-- Stats Grid (XP & Streak) -->
+            <section class="grid grid-cols-1 gap-4">
+                <!-- XP Bar - Cyber Green -->
+                <div
+                    class="cyber-border relative overflow-hidden rounded-lg bg-surface-dark border border-primary/30 p-5 group">
+                    <div class="absolute top-0 right-0 p-2 opacity-20">
+                        <span class="material-symbols-outlined text-4xl text-primary">bolt</span>
+                    </div>
+                    <div class="flex justify-between items-end mb-2 relative z-10">
+                        <div>
+                            <p class="text-primary text-xs font-mono font-bold mb-1">XP_MODULE</p>
+                            <p id="level-title" class="text-white text-xl font-bold tracking-tight">LEVEL --</p>
+                        </div>
+                        <p class="text-primary/80 text-sm font-mono"><span id="xp-current">--</span> <span
+                                class="text-gray-500">/</span> <span id="xp-target">--</span></p>
+                    </div>
+                    <div class="relative h-3 w-full bg-black/40 rounded-sm overflow-hidden border border-white/5">
+                        <div id="xp-progress-bar" class="absolute inset-y-0 left-0 bg-primary shadow-neon-green"
+                            style="width: 0%"></div>
+                        <!-- Glitch lines inside bar -->
+                        <div class="absolute inset-y-0 left-[20%] w-[2px] bg-black/20"></div>
+                        <div class="absolute inset-y-0 left-[60%] w-[1px] bg-black/20"></div>
+                    </div>
+                    <div class="mt-2 flex justify-between text-[10px] text-gray-500 font-mono uppercase">
+                        <span>Syncing...</span>
+                        <span>[==========--]</span>
+                    </div>
+                </div>
+                <!-- Streak Bar - Cyber Purple -->
+                <div
+                    class="cyber-border relative overflow-hidden rounded-lg bg-surface-dark border border-purple-500/30 p-5 text-purple-400">
+                    <div class="absolute top-0 right-0 p-2 opacity-20">
+                        <span class="material-symbols-outlined text-4xl text-purple-500">local_fire_department</span>
+                    </div>
+                    <div class="flex justify-between items-end mb-2 relative z-10">
+                        <div>
+                            <p class="text-purple-400 text-xs font-mono font-bold mb-1">STREAK_SYNC</p>
+                            <p id="streak-display" class="text-white text-xl font-bold tracking-tight">-- DAY UPTIME</p>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="size-2 rounded-full bg-purple-500 animate-pulse"></span>
+                            <p class="text-purple-400/80 text-sm font-mono">ACTIVE</p>
+                        </div>
+                    </div>
+                    <div class="relative h-3 w-full bg-black/40 rounded-sm overflow-hidden border border-white/5">
+                        <div class="absolute inset-y-0 left-0 bg-purple-500 shadow-neon-purple" style="width: 100%">
+                        </div>
+                    </div>
+                    <div class="mt-2 flex justify-between text-[10px] text-gray-500 font-mono uppercase">
+                        <span>Combo x9</span>
+                        <span>Multi: 1.5x</span>
+                    </div>
+                </div>
+            </section>
+            <!-- Active Bounties (Daily Challenges) -->
+            <section id="bounties-container" class="flex flex-col gap-4">
+                <div class="text-xs font-mono text-gray-500 animate-pulse">Scanning for bounties...</div>
+            </section>
+            <!-- The Vault (Trophy Room) -->
+            <section class="mt-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                        <span class="material-symbols-outlined text-purple-500 text-xl">inventory_2</span>
+                        THE_VAULT
+                    </h3>
+                    <button class="text-xs font-mono text-purple-400 hover:text-white transition-colors">VIEW_ALL
+                        &gt;&gt;</button>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <!-- Vault Item 1 -->
+                    <div
+                        class="aspect-square relative rounded-xl bg-gradient-to-br from-surface-dark to-black border border-white/10 p-1 flex flex-col items-center justify-center group hover:border-purple-500/50 transition-all">
+                        <div
+                            class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                        </div>
+                        <div
+                            class="relative z-10 size-10 mb-2 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform duration-300">
+                            <span
+                                class="material-symbols-outlined text-3xl drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]">military_tech</span>
+                        </div>
+                        <span
+                            class="relative z-10 text-[10px] text-gray-400 font-mono text-center leading-tight group-hover:text-white">Cyber<br />Sentinel</span>
+                    </div>
+                    <!-- Vault Item 2 -->
+                    <div
+                        class="aspect-square relative rounded-xl bg-gradient-to-br from-surface-dark to-black border border-white/10 p-1 flex flex-col items-center justify-center group hover:border-primary/50 transition-all">
+                        <div
+                            class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-green-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                        </div>
+                        <div
+                            class="relative z-10 size-10 mb-2 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300">
+                            <span
+                                class="material-symbols-outlined text-3xl drop-shadow-[0_0_8px_rgba(6,249,87,0.5)]">psychology</span>
+                        </div>
+                        <span
+                            class="relative z-10 text-[10px] text-gray-400 font-mono text-center leading-tight group-hover:text-white">Mind<br />Hacker</span>
+                    </div>
+                    <!-- Vault Item 3 (Locked) -->
+                    <div
+                        class="aspect-square relative rounded-xl bg-black/40 border border-white/5 p-1 flex flex-col items-center justify-center opacity-50">
+                        <div class="relative z-10 size-10 mb-2 flex items-center justify-center text-gray-600">
+                            <span class="material-symbols-outlined text-3xl">lock</span>
+                        </div>
+                        <span
+                            class="relative z-10 text-[10px] text-gray-600 font-mono text-center leading-tight">Encrypted</span>
+                    </div>
+                </div>
+            </section>
+            <!-- System Footer -->
+            <div
+                class="mt-4 border-t border-white/5 pt-4 flex justify-between items-center text-[10px] text-gray-600 font-mono">
+                <span>VER: 2.4.9-BETA</span>
+                <span>SERVER: US-EAST-1</span>
+                <span>ID: 88294</span>
+            </div>
+        </main>
+        <!-- Floating Action Button / Nav -->
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+            <div
+                class="flex items-center gap-1 p-1.5 rounded-full bg-surface-dark/90 backdrop-blur border border-white/10 shadow-2xl">
+                <button
+                    class="size-12 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+                    <span class="material-symbols-outlined">dashboard</span>
+                </button>
+                <button
+                    class="size-14 rounded-full flex items-center justify-center bg-primary text-black shadow-neon-green hover:scale-105 transition-transform">
+                    <span class="material-symbols-outlined text-2xl">add_task</span>
+                </button>
+                <button
+                    class="size-12 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+                    <span class="material-symbols-outlined">person</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    </div>
+    <script src="../phoenix-loader.js"></script>
+    <script>
+        async function loadCyberData() {
+            try {
+                const data = await window.phoenixAPI.getGamificationProfile();
+                if (data && data.profile) {
+                    const p = data.profile;
+                    window.updateElement('level-title', `LEVEL ${p.level}`);
+                    window.updateElement('xp-current', p.total_points);
+                    window.updateElement('xp-target', p.points_to_next_level);
+                    window.updateElement('streak-display', `${p.current_streak} DAY UPTIME`);
+
+                    let progress = 0;
+                    if (p.points_to_next_level > 0) {
+                        progress = (p.total_points / p.points_to_next_level) * 100;
+                        if (progress > 100) progress = 100;
+                    }
+                    const bar = document.getElementById('xp-progress-bar');
+                    if (bar) bar.style.width = `${progress}%`;
+                }
+
+                // Bounties
+                const bounties = await window.phoenixAPI.getDailyChallenges();
+                const bContainer = document.getElementById('bounties-container');
+
+                if (bounties && bounties.challenges && bounties.challenges.length > 0) {
+                    let html = `
+                        <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                            <h3 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-xl">gpp_maybe</span>
+                                ACTIVE_BOUNTIES
+                            </h3>
+                            <span class="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-mono border border-primary/20">${bounties.challenges.length} DETECTED</span>
+                        </div>
+                     `;
+
+                    bounties.challenges.forEach(q => {
+                        html += `
+                        <div class="group relative flex items-center gap-4 p-4 rounded-lg bg-surface-dark border border-white/5 hover:border-primary/50 transition-all cursor-pointer">
+                            <!-- Checkbox Graphic -->
+                            <div class="relative flex items-center justify-center size-12 shrink-0 rounded bg-black/40 border border-primary/30 group-hover:shadow-neon-green group-hover:border-primary transition-all">
+                                <span class="material-symbols-outlined text-gray-600 group-hover:text-primary transition-colors">check_box_outline_blank</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between mb-1">
+                                    <h4 class="text-white font-medium truncate pr-2">${q.title}</h4>
+                                    <span class="text-primary text-xs font-mono shrink-0">+${q.reward_xp} XP</span>
+                                </div>
+                                <p class="text-gray-400 text-sm line-clamp-1">${q.description || 'System Directive Unknown'}</p>
+                                <!-- Mini progress for task -->
+                                <div class="mt-2 h-1 w-full bg-black/50 rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary/60 w-0"></div>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                    });
+                    bContainer.innerHTML = html;
+                } else {
+                    bContainer.innerHTML = '<div class="text-xs font-mono text-gray-500">NO ACTIVE BOUNTIES</div>';
+                }
+            } catch (e) {
+                console.error("Failed to load RPG Cyber data", e);
+            }
+        }
+        loadCyberData();
+        setInterval(loadCyberData, 10000);
+    </script>
+</body>
+
+</html>

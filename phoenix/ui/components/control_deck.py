@@ -7,6 +7,8 @@ class ControlDeck(QFrame):
     """
     war_room_toggled = pyqtSignal(bool)
     no_distractions_toggled = pyqtSignal(bool)
+    # Alias for newer consumers
+    zen_mode_toggled = no_distractions_toggled
 
     def __init__(self, parent=None):
         super().__init__(parent)

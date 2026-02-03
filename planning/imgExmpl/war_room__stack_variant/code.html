@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Phoenix War Room</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "card-dark": "#1c1f26",
+                        "card-dark-hover": "#252932",
+                        "obsidian-accent": "#292e38",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    boxShadow: {
+                        "glow-blue": "0 0 10px rgba(23, 84, 207, 0.5)",
+                        "glow-cyan": "0 0 8px rgba(34, 211, 238, 0.6)",
+                        "glow-green": "0 0 8px rgba(34, 197, 94, 0.6)",
+                        "glow-red": "0 0 8px rgba(239, 68, 68, 0.4)",
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display antialiased min-h-screen flex flex-col overflow-x-hidden">
+    <!-- Top App Bar -->
+    <header
+        class="sticky top-0 z-50 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md p-4 pb-2 justify-between border-b border-gray-200 dark:border-white/5">
+        <div
+            class="text-gray-900 dark:text-white flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors cursor-pointer">
+            <span class="material-symbols-outlined" style="font-size: 24px;">menu</span>
+        </div>
+        <h2 id="room-title"
+            class="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center">
+            Phoenix War Room</h2>
+        <div class="flex items-center justify-end">
+            <button
+                class="text-primary dark:text-[#9da6b8] hover:text-primary dark:hover:text-white transition-colors text-sm font-bold leading-normal tracking-wide shrink-0 flex items-center gap-1">
+                <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                New Room
+            </button>
+        </div>
+    </header>
+    <!-- Filter Chips -->
+    <div class="w-full bg-background-light dark:bg-background-dark pt-4 pb-2">
+        <div class="flex gap-3 px-4 overflow-x-auto hide-scrollbar">
+            <!-- Active Chip -->
+            <button
+                class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary text-white pl-3 pr-4 shadow-glow-blue transition-transform active:scale-95">
+                <span class="material-symbols-outlined" style="font-size: 18px;">grid_view</span>
+                <p class="text-sm font-bold leading-normal">All Domains</p>
+            </button>
+            <!-- Inactive Chips -->
+            <button
+                class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-obsidian-accent border border-gray-200 dark:border-white/5 pl-3 pr-4 hover:bg-gray-100 dark:hover:bg-[#343a46] transition-colors active:scale-95">
+                <span class="material-symbols-outlined text-gray-500 dark:text-gray-400"
+                    style="font-size: 18px;">security</span>
+                <p class="text-gray-700 dark:text-gray-200 text-sm font-medium leading-normal">Cybersecurity</p>
+            </button>
+            <button
+                class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-obsidian-accent border border-gray-200 dark:border-white/5 pl-3 pr-4 hover:bg-gray-100 dark:hover:bg-[#343a46] transition-colors active:scale-95">
+                <span class="material-symbols-outlined text-gray-500 dark:text-gray-400"
+                    style="font-size: 18px;">database</span>
+                <p class="text-gray-700 dark:text-gray-200 text-sm font-medium leading-normal">Data Ops</p>
+            </button>
+            <button
+                class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-obsidian-accent border border-gray-200 dark:border-white/5 pl-3 pr-4 hover:bg-gray-100 dark:hover:bg-[#343a46] transition-colors active:scale-95">
+                <span class="material-symbols-outlined text-gray-500 dark:text-gray-400"
+                    style="font-size: 18px;">lightbulb</span>
+                <p class="text-gray-700 dark:text-gray-200 text-sm font-medium leading-normal">Strategic Intel</p>
+            </button>
+        </div>
+    </div>
+    <!-- Main Content List -->
+    <main class="flex-1 flex flex-col gap-6 p-4 pb-24">
+        <!-- Section Header -->
+        <div class="flex items-center justify-between mt-2">
+            <h2 class="text-gray-900 dark:text-white tracking-tight text-2xl font-bold leading-tight">Active Operations
+            </h2>
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-widest">Priority
+                Sorted</span>
+        </div>
+        <!-- Card Stack Container -->
+        <div class="flex flex-col gap-5">
+            <!-- Card 1: Critical -->
+            <div class="group relative @container">
+                <!-- Swipe Hint Underlay (Simulated) -->
+                <div
+                    class="absolute inset-0 bg-red-900/20 rounded-xl translate-x-2 translate-y-2 -z-10 group-hover:translate-x-3 group-hover:translate-y-3 transition-transform duration-300">
+                </div>
+                <div
+                    class="flex flex-col rounded-xl bg-white dark:bg-card-dark shadow-lg dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-white/5 overflow-hidden transition-all duration-300 active:scale-[0.98]">
+                    <!-- Card Header / Image -->
+                    <div class="relative h-32 w-full overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+                        <div class="w-full h-full bg-cover bg-center"
+                            data-alt="Abstract cyber security data stream visualization in dark blue"
+                            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDv8uhRFX_u7lOFdVTC1SkdywfUY4Mqv6aycoLlryse4_yS8akR0XK7GWIkn_M39ZzGjlfk0QXFQi_vB61I9vo9rNKNhS9V7B03u8GDhl877CtyY62KX8tyLj-ym_6HVZsjdEnv-1EVoltMMjXhNXcyoxGVkDL7cbiQn2R7jQrqXfwrsOjNkKfM2hmuDSgPdmesj7DB5_zYxbKfsD18Z8My43pa4KcDUI0SwJcFdaAD_i4mIrdweXSKbnRWrfIwMwm7yB38WmF8qZg');">
+                        </div>
+                        <!-- Status Badge -->
+                        <div class="absolute top-3 right-3 z-20">
+                            <div
+                                class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 backdrop-blur-md border border-red-500/30">
+                                <div class="w-2 h-2 rounded-full bg-red-500 shadow-glow-red animate-pulse"></div>
+                                <span class="text-xs font-bold text-red-100">CRITICAL ALERT</span>
+                            </div>
+                        </div>
+                        <div class="absolute bottom-3 left-4 z-20">
+                            <h3 class="text-white text-xl font-bold leading-tight tracking-tight">Incident: Firewall
+                                Breach</h3>
+                        </div>
+                    </div>
+                    <!-- Card Body -->
+                    <div class="p-4 flex flex-col gap-4">
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">shield</span>
+                                <span>Cybersecurity Domain</span>
+                            </div>
+                            <span class="text-xs text-gray-400 dark:text-gray-600">Updated 2m ago</span>
+                        </div>
+                        <!-- Participants & Bots -->
+                        <div
+                            class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-black/20 border border-gray-100 dark:border-white/5">
+                            <div class="flex items-center gap-3">
+                                <!-- Human Avatars -->
+                                <div class="flex -space-x-2 overflow-hidden">
+                                    <img alt="Female collaborator portrait"
+                                        class="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-[#1c1f26]"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUKC7iULcX7dOkdtRmkdoZ7yn85bUMORY4TfX9hkFmlsXH_rkiu7iRDUQZwwpP2G2iZEpdI9Rdealt5jKT4Z_EMBNoIf_2Km9UEkyEHj5QmbXEgOD12xGlAkRck8Zb7tFbH18Q--xhLO8mApqPl8KQVL5dO-6Sy062Xmyv_ML2HDZMwaKjwBdQ3tcIcjy1FqRdtr9jyPCIEpB69Bw1yVnDsHQLJm6SqWDxii7BoON7i79mwLck3d4aS70gAh9V5wGkAHornBD4GLY" />
+                                    <img alt="Male collaborator portrait"
+                                        class="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-[#1c1f26]"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN7c18Ne772K7Q6FI-ieI2lJuevnvIxYeMHpOJmuuKPR6xqruoiAXEFyR3hQn241W84zr_L495Ae94yLuvvfvM6i3FSFVi1UO0gN6P3RN8yb9vFDyzG5517gxoQ6r69YZbaViTffUzRxrcou8l7SeByyodEDYkoiQFrwSzYxbYezBA0dj-6VyvSqtkUe3Y5D06tJH6Tw3io-4UomaRp3YmvjKyGsdoM1nCO_XuLwnD_j9yk-Js_CdXNTIWnGQs7syDhuSj5bY-TWk" />
+                                    <div
+                                        class="flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-gray-200 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                        +3</div>
+                                </div>
+                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Humans</span>
+                            </div>
+                            <!-- Bot Node -->
+                            <div class="h-4 w-[1px] bg-gray-300 dark:bg-gray-700"></div>
+                            <div class="flex items-center gap-2">
+                                <div class="relative flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-cyan-400"
+                                        style="font-size: 20px;">smart_toy</span>
+                                    <div
+                                        class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 shadow-glow-cyan">
+                                    </div>
+                                </div>
+                                <div class="text-xs font-medium text-cyan-600 dark:text-cyan-400">
+                                    Sentinel AI
+                                    <span class="block text-[10px] text-gray-400 dark:text-gray-500">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Action -->
+                        <div class="flex gap-3">
+                            <button
+                                class="flex-1 h-10 flex items-center justify-center rounded-lg bg-primary hover:bg-blue-600 text-white text-sm font-bold shadow-lg shadow-blue-900/20 transition-all active:scale-95">
+                                Enter War Room
+                            </button>
+                            <button
+                                class="h-10 w-10 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">archive</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 2: High Priority -->
+            <div class="group relative @container">
+                <div
+                    class="flex flex-col rounded-xl bg-white dark:bg-card-dark shadow-md dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-white/5 overflow-hidden transition-all duration-300 active:scale-[0.98]">
+                    <!-- Card Header / Image -->
+                    <div class="relative h-32 w-full overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+                        <div class="w-full h-full bg-cover bg-center grayscale-[50%]"
+                            data-alt="Global strategic map with glowing nodes connections"
+                            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDKJ2PETmz_FhYgCvnlDt-9QSma6WopEVM8ZLOjLjJ3bPnX9DAXeEVXM5pmnWYzCP6tS_J1B6n4HOcC2Q0e_oYQclheIJjw16GcpKDuimgsCem6jybsi19bOkJ0XuKOSY1VPN5WDIZWWCpHLbd-NYNVEVXnmmN4jddCTSD_Peu5q732FDO52DPXcgdjcSxwDEwGLcDZmwm77DWSeLNRshJVTW0QIqi9MImjDZr7qfc9te5ehAnw-XwaV_WkEqRq6h8F3LHB3YSkPX0');">
+                        </div>
+                        <!-- Status Badge -->
+                        <div class="absolute top-3 right-3 z-20">
+                            <div
+                                class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/20 backdrop-blur-md border border-orange-500/30">
+                                <div class="w-2 h-2 rounded-full bg-orange-500"></div>
+                                <span class="text-xs font-bold text-orange-100">HIGH PRIORITY</span>
+                            </div>
+                        </div>
+                        <div class="absolute bottom-3 left-4 z-20">
+                            <h3 class="text-white text-xl font-bold leading-tight tracking-tight">Project: Deep Blue
+                            </h3>
+                        </div>
+                    </div>
+                    <!-- Card Body -->
+                    <div class="p-4 flex flex-col gap-4">
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">lightbulb</span>
+                                <span>Strategic Intel</span>
+                            </div>
+                            <span class="text-xs text-gray-400 dark:text-gray-600">Updated 1h ago</span>
+                        </div>
+                        <!-- Participants & Bots -->
+                        <div
+                            class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-black/20 border border-gray-100 dark:border-white/5">
+                            <div class="flex items-center gap-3">
+                                <!-- Human Avatars -->
+                                <div class="flex -space-x-2 overflow-hidden">
+                                    <img alt="Collaborator portrait"
+                                        class="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-[#1c1f26]"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0Jt0t3TlT9Wd1iuo5tARkTFiI2ajjvmQ1iB4PO9A2xySvoke3Mfqd3w9FgqXog1ApsWugibez9rSlgEiX4HaYxS0cKIgTTCaZYI2RssqaiMTsSxa1P_KmpwDOWQK-FosBApj0ciltowCltx7vE1ShS6uEcENHzv4rKBiiPLvAOTKFLdkcYQRAVYfd-RNTmboYFg7JRkLOofGbJdOaPovZhX8q9lwuUeragvufKuEpZxCGmUO4eWZQYefhg_fXIHwngkdjuxot40U" />
+                                    <div
+                                        class="flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-white dark:ring-[#1c1f26] bg-gray-200 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                        +2</div>
+                                </div>
+                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Humans</span>
+                            </div>
+                            <!-- Bot Node -->
+                            <div class="h-4 w-[1px] bg-gray-300 dark:bg-gray-700"></div>
+                            <div class="flex items-center gap-2">
+                                <div class="relative flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-purple-400"
+                                        style="font-size: 20px;">psychology</span>
+                                    <div
+                                        class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-purple-400 shadow-glow-blue">
+                                    </div>
+                                </div>
+                                <div class="text-xs font-medium text-purple-600 dark:text-purple-400">
+                                    Analyst V2
+                                    <span class="block text-[10px] text-gray-400 dark:text-gray-500">Thinking</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Action -->
+                        <div class="flex gap-3">
+                            <button
+                                class="flex-1 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-white/10 hover:bg-gray-50 dark:hover:bg-white/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm font-bold transition-all active:scale-95">
+                                Enter Room
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 3: Routine -->
+            <div class="group relative @container opacity-80 hover:opacity-100 transition-opacity">
+                <div
+                    class="flex flex-col rounded-xl bg-white dark:bg-card-dark shadow-sm dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)] border border-gray-100 dark:border-white/5 overflow-hidden transition-all duration-300 active:scale-[0.98]">
+                    <div class="flex p-4 gap-4 items-center">
+                        <div class="h-16 w-16 shrink-0 rounded-lg bg-cover bg-center"
+                            data-alt="Abstract white server data rack closeup"
+                            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTPTazBg8SAKt-Ub7esLkkE7oewIZlyyBFK14O-ao5cPVbbkmm209iPMujqU41aVbZzd5BrLrNYUf5jCLa_994KXnRcP0R_O6fd7XNKo0b8ZM0VmaZD_QVOJLfQxa03aPr9F8m3fTm0VimYwkubxA9k-I9_Pi44lYj6mGA9irVz0NHtRlGWWNGV-CH0KT8CwdSjcjyUkGqJx4E2bxNcshb34iRce9g18GC1_ac9YyxIIJJfyMwQGpNW_rMHJh3ZXGDzoDgVsv8vmY');">
+                        </div>
+                        <div class="flex flex-col flex-1 gap-1">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-gray-900 dark:text-white text-base font-bold leading-tight">Op: Falcon
+                                    Eye</h3>
+                                <div class="w-2 h-2 rounded-full bg-green-500 shadow-glow-green"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Database Optimization • Routine</p>
+                            <div class="flex items-center gap-4 mt-1">
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-gray-400"
+                                        style="font-size: 14px;">person</span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">2</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-cyan-400"
+                                        style="font-size: 14px;">smart_toy</span>
+                                    <span class="text-xs text-cyan-600 dark:text-cyan-400 font-medium">1 Bot</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button
+                            class="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10">
+                            <span class="material-symbols-outlined text-gray-400"
+                                style="font-size: 20px;">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 4: Routine/Background Stack -->
+            <div class="group relative @container opacity-60">
+                <div
+                    class="flex flex-col rounded-xl bg-white dark:bg-card-dark shadow-sm dark:shadow-none border border-gray-100 dark:border-white/5 p-4">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="h-10 w-10 shrink-0 rounded-lg bg-gray-200 dark:bg-white/5 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-gray-400" style="font-size: 20px;">folder</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <h3 class="text-gray-900 dark:text-white text-sm font-bold">Archived: Q3 Audit</h3>
+                            <p class="text-xs text-gray-500">Last active 3 months ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Bottom Gradiant Fade (Visual Polish) -->
+    <div
+        class="fixed bottom-0 left-0 w-full h-12 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent pointer-events-none z-40">
+    </div>
+    <script src="../phoenix-loader.js"></script>
+    <script>
+        async function loadWarRoomData() {
+            const lat = await window.phoenixAPI.checkLatency();
+            const title = document.getElementById('room-title');
+            if (lat < 2000) {
+                title.innerText = "Phoenix War Room [LIVE]";
+                title.classList.add('text-green-500');
+            } else {
+                title.innerText = "Phoenix War Room [OFFLINE]";
+                title.classList.add('text-red-500');
+            }
+        }
+        loadWarRoomData();
+        setInterval(loadWarRoomData, 10000);
+    </script>
+</body>
+
+</html>

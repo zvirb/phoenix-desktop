@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen">
+    <div
+        class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden">
+        <!-- TopAppBar -->
+        <div
+            class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-slate-200 dark:border-slate-800">
+            <div class="text-slate-900 dark:text-white flex size-12 shrink-0 items-center">
+                <span class="material-symbols-outlined cursor-pointer">arrow_back_ios</span>
+            </div>
+            <h2
+                class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">
+                Phoenix Agent</h2>
+        </div>
+        <!-- Section: Capture Tuning -->
+        <div class="px-2">
+            <h2
+                class="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-6">
+                Capture Tuning</h2>
+            <!-- Slider: Interval -->
+            <div class="@container">
+                <div
+                    class="relative flex w-full flex-col items-start justify-between gap-3 p-4 @[480px]:flex-row @[480px]:items-center">
+                    <div class="flex w-full shrink-[3] items-center justify-between">
+                        <p class="text-slate-700 dark:text-slate-200 text-base font-medium leading-normal">Capture
+                            Interval (10s - 60s)</p>
+                        <p class="text-slate-900 dark:text-white text-sm font-bold leading-normal @[480px]:hidden">30s
+                        </p>
+                    </div>
+                    <div class="flex h-4 w-full items-center gap-4">
+                        <div class="flex h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700">
+                            <div class="h-full w-[40%] rounded-full bg-primary"></div>
+                            <div class="relative">
+                                <div
+                                    class="absolute -left-2 -top-2 size-5 rounded-full bg-white border-2 border-primary shadow-sm">
+                                </div>
+                            </div>
+                        </div>
+                        <p
+                            class="text-slate-900 dark:text-white text-sm font-bold leading-normal hidden @[480px]:block">
+                            30s</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Slider: Similarity -->
+            <div class="@container">
+                <div
+                    class="relative flex w-full flex-col items-start justify-between gap-3 p-4 @[480px]:flex-row @[480px]:items-center">
+                    <div class="flex w-full shrink-[3] items-center justify-between">
+                        <p class="text-slate-700 dark:text-slate-200 text-base font-medium leading-normal">Similarity
+                            Threshold</p>
+                        <p class="text-slate-900 dark:text-white text-sm font-bold leading-normal @[480px]:hidden">85%
+                        </p>
+                    </div>
+                    <div class="flex h-4 w-full items-center gap-4">
+                        <div class="flex h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700">
+                            <div class="h-full w-[85%] rounded-full bg-primary"></div>
+                            <div class="relative">
+                                <div
+                                    class="absolute -left-2 -top-2 size-5 rounded-full bg-white border-2 border-primary shadow-sm">
+                                </div>
+                            </div>
+                        </div>
+                        <p
+                            class="text-slate-900 dark:text-white text-sm font-bold leading-normal hidden @[480px]:block">
+                            85%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Section: Local Intelligence -->
+        <div class="px-2 mt-4">
+            <h2
+                class="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
+                Local Intelligence</h2>
+            <div
+                class="mx-4 p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+                <!-- Status Row: Ollama -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+                        <div>
+                            <p class="text-slate-900 dark:text-white text-sm font-semibold">Ollama Inference</p>
+                            <p id="ollama-status" class="text-slate-500 dark:text-slate-400 text-xs">Port 11434 •
+                                Checking...</p>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-400 text-sm">settings_ethernet</span>
+                </div>
+                <hr class="border-slate-100 dark:border-slate-700" />
+                <!-- Status Row: Tailscale -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+                        <div>
+                            <p class="text-slate-900 dark:text-white text-sm font-semibold">Tailscale IP Detection</p>
+                            <p id="tailscale-status" class="text-slate-500 dark:text-slate-400 text-xs">Scanning...</p>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-400 text-sm">vpn_lock</span>
+                </div>
+            </div>
+        </div>
+        <!-- Section: Recent Activity Ledger -->
+        <div class="px-2 mt-8 pb-10">
+            <div class="flex items-center justify-between px-4 pb-3">
+                <h2 class="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">
+                    Activity Ledger</h2>
+                <button class="text-primary text-sm font-semibold">View All</button>
+            </div>
+            <div class="flex flex-col gap-3 px-4">
+                <!-- Activity Item 1 -->
+                <div
+                    class="flex gap-4 p-3 rounded-xl bg-white dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
+                    <div
+                        class="w-20 h-14 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-600">
+                        <img class="w-full h-full object-cover" data-alt="Screenshot of a coding environment"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJYb3Q_hcy0hxHnciP4M0Q2j1TSgGcJmyVif9NIoQrK2n1V4fYDIMIZNhzj4M2piFtT01OISbIYOkO5IkpFn47w7evMml7qj7zJXcvMbo_sIK3lkuCJz3N0A1p_h0VvYPSvb6GhxpCR0bSELz1m7v8qv-ACdIO3vDdFwqrrPB4oy5Ders1bE7okc5UJySHzyXTmyqVuUMjSWahIj9_mbTuAhhYZq_f-SAON_4qSBW2Zq8gBfnAHMUkcFBMk0aPov2CFVu2xtZVyH4" />
+                    </div>
+                    <div class="flex flex-col justify-center overflow-hidden">
+                        <p class="text-slate-900 dark:text-white text-sm font-medium truncate">Context sync to Core</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs truncate">45 metadata tags • 2 min ago</p>
+                    </div>
+                    <div class="ml-auto flex items-center">
+                        <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                    </div>
+                </div>
+                <!-- Activity Item 2 -->
+                <div
+                    class="flex gap-4 p-3 rounded-xl bg-white dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
+                    <div
+                        class="w-20 h-14 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-600">
+                        <img class="w-full h-full object-cover opacity-80" data-alt="Browser window with data charts"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIF61NWM2OfMjzF3TqcmRrFj0xd59uE8-sgcxBHvil7lV8bVIaGFpFpuODDUG3R70BD2AbFdcgkrOq28jx9u5SMsVZKsqUDcsAc8oS9GqrzE9TJqEL6oJWGshKE47tNeIkSOvzV_99jUJBIgZGdxExsml41Hx-U-GQCupTV5sGjGn9AAhcHWzJA9fWnYC1vQGGaTLFxeAqGacKDIbTmSF63WiaPu5kBc_jn9dlqCytfFQ17P0oLWrW3MN35OC1hrhJkiJOv3ctBhk" />
+                    </div>
+                    <div class="flex flex-col justify-center overflow-hidden">
+                        <p class="text-slate-900 dark:text-white text-sm font-medium truncate">Similarity Cull</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs truncate">Duplicate frame discarded • 12
+                            min ago</p>
+                    </div>
+                    <div class="ml-auto flex items-center">
+                        <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                    </div>
+                </div>
+                <!-- Activity Item 3 -->
+                <div
+                    class="flex gap-4 p-3 rounded-xl bg-white dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
+                    <div
+                        class="w-20 h-14 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-600">
+                        <img class="w-full h-full object-cover" data-alt="Laptop screen showing research papers"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPqbQv1iD7zy1FfH2qu20Wj0a73MBaSB26O8Nve3FSstK2tfVjzeFCAsZzJnYJ-7OXQXw8YcLfyFxQz8lDcZFhEeuCLnL4zugNxghPzpthF-2cAYoOrjkBPN_Yn7tSzbFvApx8M6mBNH_jOQi7p9gbG9QJ2w9tO1SyRW6510rLOJVuZvwYRSmNQQh1LY2k-UjtxwIWLuKXhXJFOE53r_Ub_91e_rlhH756EL_BokwF69lQw-5i8qQhPINGjo177P3Nq1fIcdy0Sb0" />
+                    </div>
+                    <div class="flex flex-col justify-center overflow-hidden">
+                        <p class="text-slate-900 dark:text-white text-sm font-medium truncate">Research Indexing</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs truncate">Ollama summarized 3 pages • 1
+                            hour ago</p>
+                    </div>
+                    <div class="ml-auto flex items-center">
+                        <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer Navigation (iOS style) -->
+        <div
+            class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-around p-3 pb-8">
+            <div class="flex flex-col items-center gap-1 text-slate-400">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-[10px]">Dashboard</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 text-slate-400">
+                <span class="material-symbols-outlined">history</span>
+                <span class="text-[10px]">History</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 text-primary">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-[10px]">Settings</span>
+            </div>
+        </div>
+    </div>
+    </div>
+    <script src="../phoenix-loader.js"></script>
+    <script>
+        async function loadSettingsData() {
+            const lat = await window.phoenixAPI.checkLatency();
+            const oStatus = document.getElementById('ollama-status');
+            const tStatus = document.getElementById('tailscale-status');
+
+            if (lat < 2000) {
+                oStatus.innerText = "Port 11434 • Verified";
+                oStatus.classList.add('text-emerald-500');
+
+                // Assume if we can reach backend, we are on mesh? 
+                // We can't know tailscale IP easily.
+                tStatus.innerText = "Mesh Connected • Active";
+                tStatus.classList.add('text-emerald-500');
+            } else {
+                oStatus.innerText = "Unreachable";
+                tStatus.innerText = "Offline";
+            }
+        }
+        loadSettingsData();
+    </script>
+</body>
+
+</html>

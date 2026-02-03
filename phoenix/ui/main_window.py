@@ -3,18 +3,23 @@ import sys
 from pathlib import Path
 
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QInputDialog
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, QThread
 
 from phoenix.core.app_bar import AppBarManager
 from phoenix.ui.components.header_hud import HeaderHUD
 from phoenix.ui.components.activity_list import ActivityList
 from phoenix.ui.components.control_deck import ControlDeck
+from phoenix.ui.components.stats_widget import StatsWidget
+from phoenix.ui.components.waveform_widget import WaveformWidget
+from phoenix.ui.components.neural_selector import NeuralSelector
 
 from phoenix.services.context_worker import ContextWorker
 from phoenix.services.mesh_worker import MeshWorker
 from phoenix.services.sync_worker import SyncWorker
+from phoenix.services.audio_worker import AudioWorker
 
 from datetime import datetime
+
 
 from phoenix.ui.views.onboarding import OnboardingView
 from phoenix.ui.views.settings import SettingsDialog
@@ -51,9 +56,21 @@ class MainWindow(QMainWindow):
         self.header_hud = HeaderHUD()
         self.layout.addWidget(self.header_hud)
         
+        # Stats Widget (Tech Variant)
+        self.stats_widget = StatsWidget()
+        self.layout.addWidget(self.stats_widget)
+
+        # Waveform Widget (Cognitive Cockpit)
+        self.waveform_widget = WaveformWidget()
+        self.layout.addWidget(self.waveform_widget)
+        
         # Container for main views (Stack would be better but simple hide/show works)
         self.activity_list = ActivityList()
         self.layout.addWidget(self.activity_list, 1) # Stretch to fill space
+        
+        # Neural Selector
+        self.neural_selector = NeuralSelector()
+        self.layout.addWidget(self.neural_selector)
         
         self.control_deck = ControlDeck()
         self.layout.addWidget(self.control_deck)
@@ -79,6 +96,11 @@ class MainWindow(QMainWindow):
         self.mesh_worker = MeshWorker()
         self.sync_worker = SyncWorker()
         
+        # Audio Thread Setup
+        self.audio_thread = QThread()
+        self.audio_worker = AudioWorker()
+        self.audio_worker.moveToThread(self.audio_thread)
+        
         # 8. Connect Signals
         self.context_worker.activity_detected.connect(self.on_activity_detected)
         self.context_worker.screenshot_taken.connect(self.sync_worker.queue_upload)
@@ -88,16 +110,34 @@ class MainWindow(QMainWindow):
         self.mesh_worker.network_status.connect(self.header_hud.update_mesh)
         self.mesh_worker.mesh_info_ready.connect(self.on_mesh_info)
         
+        # Connect Audio Worker (Visualizer)
+        # We don't auto-start visualizer anymore, waiting for user toggle
+        self.audio_worker.levels_ready.connect(self.waveform_widget.set_levels)
+        self.audio_worker.recording_finished.connect(self.on_recording_finished)
+        
+        # Start Audio Thread
+        # Start worker immediately so it's ready (hot mic)
+        self.audio_thread.started.connect(self.audio_worker.start)
+        self.audio_thread.start()
         
         # Connect Control Deck
         self.control_deck.war_room_toggled.connect(self.on_war_room_toggled)
-        self.control_deck.no_distractions_toggled.connect(self.on_no_distractions_toggled)
+        self.control_deck.zen_mode_toggled.connect(self.on_zen_mode_toggled)
         self.sync_worker.heartbeat_sent.connect(lambda s: self.header_hud.set_badge_status(self.header_hud.pulse, s))
         self.sync_worker.gamification_update.connect(self.on_gamification_update)
         
         # Connect Settings
         self.header_hud.settings_btn.clicked.connect(self.on_settings_clicked)
 
+    def toggle_audio_recording(self, recording):
+        """Called by WaveformWidget when clicked."""
+        self.audio_worker.set_recording(recording)
+        
+    def on_recording_finished(self, filepath):
+        print(f"Main: Recording finished: {filepath}")
+        if self.sync_worker:
+            self.sync_worker.queue_audio_upload(filepath)
+        
     def on_settings_clicked(self):
         """Open Settings Dialog."""
         dlg = SettingsDialog(self)
@@ -167,9 +207,9 @@ class MainWindow(QMainWindow):
 
             self._load_stylesheet() # Revert to default
 
-    def on_no_distractions_toggled(self, active):
-        """Handle No Distractions toggle (Zen Mode) with Timer."""
-        logger.info(f"No Distractions Mode: {active}")
+    def on_zen_mode_toggled(self, active):
+        """Handle Zen Mode (No Distractions) toggle with Timer."""
+        logger.info(f"Zen Mode: {active}")
         
         if active:
             # Ask for duration
@@ -247,7 +287,17 @@ class MainWindow(QMainWindow):
         subtitle = f"{data.get('app_name')} - {data.get('window_title')}"
         icon = "📷"
         
-        self.activity_list.add_event(title, subtitle, time_str, icon)
+        # Determine Tags
+        tags = []
+        app = data.get('app_name', '').lower()
+        if 'code' in app or 'pycharm' in app:
+            tags = ["DEV", "FOCUS"]
+        elif 'chrome' in app or 'edge' in app:
+            tags = ["WEB"]
+        elif 'slack' in app or 'discord' in app:
+            tags = ["CHAT"]
+            
+        self.activity_list.add_event(title, subtitle, time_str, icon, tags=tags)
         # Pulse visual eye
         self.header_hud.update_visual(True)
 
@@ -325,5 +375,18 @@ class MainWindow(QMainWindow):
         self.context_worker.stop()
         self.mesh_worker.stop()
         self.sync_worker.stop()
+        
+        # Stop Audio
+        if self.audio_thread.isRunning():
+            # We should ask worker to stop first, but direct call crosses thread
+            # Let's just quit thread and wait?
+            # Ideally: signal to stop. But simple quit is okay for now.
+            self.audio_worker.stop() # This might be unsafe across threads if it touches QObjects? 
+            # Actually stop() just stops QAudioSource. QAudioSource is thread-safe re: stop?
+            # Better: Queue it.
+            # But for shutdown:
+            self.audio_thread.quit()
+            self.audio_thread.wait()
+            
         self.app_bar.unregister()
         super().closeEvent(event)

@@ -39,6 +39,7 @@ class SyncWorker(QThread):
         
         # Queue for screenshots to upload
         self.upload_queue = []
+        self.audio_queue = [] # Queue for audio paths
         self.queue_lock = False # Simple lock for this single thread loop
         
         self._init_client()
@@ -63,39 +64,6 @@ class SyncWorker(QThread):
         """Update local state for next heartbeat."""
         self.current_state.update(kwargs)
 
-    def queue_upload(self, image_bytes):
-        """Add image to upload queue."""
-        self.upload_queue.append(image_bytes)
-
-    def run(self):
-        logger.info("SyncWorker started")
-        while self.running:
-            try:
-                current_time = time.time()
-                
-                # 0. Check Client
-                if not self.client:
-                    self._init_client()
-                    if not self.client:
-                        time.sleep(5)
-                        continue
-
-                # 1. Process Uploads
-                if self.upload_queue:
-                    img_bytes = self.upload_queue.pop(0) # FIFO
-                    self._upload_screenshot(img_bytes)
-
-                # 2. Heartbeat (Periodic)
-                if current_time - self.last_heartbeat >= self.heartbeat_interval:
-                    self._send_heartbeat()
-                    self._fetch_gamification() # Piggyback on heartbeat
-                    self.last_heartbeat = current_time
-
-            except Exception as e:
-                logger.error(f"SyncWorker loop error: {e}")
-            
-            time.sleep(1) # Check queue every second
-
     def _fetch_gamification(self):
         try:
             data = self.client.get_gamification_profile()
@@ -118,8 +86,51 @@ class SyncWorker(QThread):
             success = res.get('status') != 'failed'
             self.heartbeat_sent.emit(success)
         except Exception as e:
-            logger.error(f"Heartbeat error: {e}")
             self.heartbeat_sent.emit(False)
+
+    def queue_upload(self, image_bytes):
+        """Add image to upload queue."""
+        self.upload_queue.append(image_bytes)
+
+    def queue_audio_upload(self, file_path):
+        """Add audio file path to upload queue."""
+        self.audio_queue.append(file_path)
+
+    def run(self):
+        logger.info("SyncWorker started")
+        while self.running:
+            try:
+                current_time = time.time()
+                
+                # 0. Check Client
+                if not self.client:
+                    self._init_client()
+                    if not self.client:
+                        time.sleep(5)
+                        continue
+
+                # 1. Process Uploads (Screenshots)
+                if self.upload_queue:
+                    img_bytes = self.upload_queue.pop(0) # FIFO
+                    self._upload_screenshot(img_bytes)
+
+                # 1.5 Process Audio Uploads
+                if self.audio_queue:
+                    audio_path = self.audio_queue.pop(0)
+                    self._upload_audio(audio_path)
+
+                # 2. Heartbeat (Periodic)
+                if current_time - self.last_heartbeat >= self.heartbeat_interval:
+                    self._send_heartbeat()
+                    self._fetch_gamification() # Piggyback on heartbeat
+                    self.last_heartbeat = current_time
+
+            except Exception as e:
+                logger.error(f"SyncWorker loop error: {e}")
+            
+            time.sleep(1) # Check queue every second
+
+    # ... (other methods) ...
 
     def _upload_screenshot(self, img_bytes):
         try:
@@ -129,6 +140,19 @@ class SyncWorker(QThread):
         except Exception as e:
             logger.error(f"Upload error: {e}")
             self.uploaded.emit(False)
+
+    def _upload_audio(self, file_path):
+        try:
+            with open(file_path, 'rb') as f:
+                audio_bytes = f.read()
+            res = self.client.upload_audio(audio_bytes)
+            success = res.get('status') != 'failed'
+            if success:
+                logger.info(f"Audio uploaded successfully: {file_path}")
+            else:
+                logger.error(f"Audio upload failed status: {res}")
+        except Exception as e:
+            logger.error(f"Audio Upload error: {e}")
 
     def stop(self):
         self.running = False

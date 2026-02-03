@@ -243,6 +243,25 @@ class APIClient:
             timeout=60
         )
 
+    def upload_audio(self, audio_bytes: bytes) -> Dict[str, Any]:
+        """Upload an audio note for STT."""
+        files = {
+            'file': ('voice_note.wav', audio_bytes, 'audio/wav')
+        }
+        data = {
+            'device_id': self.device_id,
+            'timestamp': time.time()
+        }
+        
+        logger.info(f"Uploading audio note ({len(audio_bytes)} bytes)...")
+        return self._make_request(
+            'POST',
+            '/api/v1/voice/capture',
+            files=files,
+            data=data,
+            timeout=60
+        )
+
     def get_gamification_profile(self) -> Dict[str, Any]:
         """Fetch user gamification profile (level, xp, etc)."""
         return self._make_request('GET', '/api/v1/gamification/profile')
