@@ -81,13 +81,31 @@ class HeaderHUD(QFrame):
         # 3. Brain (Local Inference)
         self.brain = StatusBadge("🧠", tooltip="Ollama Inference: Ready")
         
+        
         # 4. Mesh (Network)
         self.mesh = StatusBadge("🌐", tooltip="Tailscale Mesh: Connected")
+
+        # 5. Settings (Gear)
+        self.settings_btn = QPushButton("⚙")
+        self.settings_btn.setFixedSize(30, 30)
+        self.settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.settings_btn.setToolTip("Settings")
+        self.settings_btn.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: #94a3b8;
+                font-size: 16px;
+                border: none;
+            }
+            QPushButton:hover { color: white; }
+        """)
         
         layout.addWidget(self.pulse)
         layout.addWidget(self.eye)
         layout.addWidget(self.brain)
         layout.addWidget(self.mesh)
+        layout.addSpacing(4)
+        layout.addWidget(self.settings_btn)
 
     def set_badge_status(self, badge, active: bool):
         if active:

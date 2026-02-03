@@ -247,6 +247,13 @@ class APIClient:
         """Fetch user gamification profile (level, xp, etc)."""
         return self._make_request('GET', '/api/v1/gamification/profile')
 
+    def start_focus_session(self, duration: int = 25, task: str = None) -> Dict[str, Any]:
+        """Start a focus session."""
+        params = {"duration_minutes": duration}
+        if task:
+            params["task_category"] = task
+        return self._make_request('POST', '/api/v1/focus/session', params=params)
+
     def _retry_operation(self, func, max_attempts=3, base_delay=1):
         """Execute *func* with exponential backoff and jitter.
         Returns the successful result or raises the last exception.

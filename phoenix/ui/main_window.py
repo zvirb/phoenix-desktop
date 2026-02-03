@@ -2,8 +2,8 @@ import logging
 import sys
 from pathlib import Path
 
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QInputDialog
+from PyQt6.QtCore import Qt, QTimer
 
 from phoenix.core.app_bar import AppBarManager
 from phoenix.ui.components.header_hud import HeaderHUD
@@ -17,6 +17,7 @@ from phoenix.services.sync_worker import SyncWorker
 from datetime import datetime
 
 from phoenix.ui.views.onboarding import OnboardingView
+from phoenix.ui.views.settings import SettingsDialog
 from phoenix.core.token_manager import TokenManager
 
 logger = logging.getLogger(__name__)
@@ -87,8 +88,20 @@ class MainWindow(QMainWindow):
         self.mesh_worker.network_status.connect(self.header_hud.update_mesh)
         self.mesh_worker.mesh_info_ready.connect(self.on_mesh_info)
         
+        
+        # Connect Control Deck
+        self.control_deck.war_room_toggled.connect(self.on_war_room_toggled)
+        self.control_deck.no_distractions_toggled.connect(self.on_no_distractions_toggled)
         self.sync_worker.heartbeat_sent.connect(lambda s: self.header_hud.set_badge_status(self.header_hud.pulse, s))
         self.sync_worker.gamification_update.connect(self.on_gamification_update)
+        
+        # Connect Settings
+        self.header_hud.settings_btn.clicked.connect(self.on_settings_clicked)
+
+    def on_settings_clicked(self):
+        """Open Settings Dialog."""
+        dlg = SettingsDialog(self)
+        dlg.exec()
 
     def on_gamification_update(self, profile):
         """Update gamification stats on control deck."""
@@ -124,6 +137,77 @@ class MainWindow(QMainWindow):
         # For Level > 1, it might be slightly off visually but strictly monotonic.
         
         self.control_deck.set_stats(level, points, needed)
+
+    def on_war_room_toggled(self, active):
+        """Handle War Room toggle."""
+        logger.info(f"War Room Mode: {active}")
+        
+        if active:
+            # Visuals: Red border + Dimmer Overlay effect (simulated by border for now)
+            self.setStyleSheet("""
+                QMainWindow {
+                    background-color: #020617;
+                    border: 2px solid #ef4444; 
+                }
+                QScrollArea { border: none; background: transparent; }
+            """)
+            
+            # API: Start Focus Session (async fire-and-forget)
+            # We use SyncWorker to handle API calls usually, but let's just use the thread pool or sync worker method if available?
+            # Or just fire in background task?
+            # Let's verify if default loop can handle it. For now, just logging.
+            # Ideally we pass this intent to a worker.
+            if self.sync_worker and self.sync_worker.client:
+                 # Quick hack: run in executor to avoid blocking UI
+                 import threading
+                 threading.Thread(target=self.sync_worker.client.start_focus_session, kwargs={'duration': 60, 'task': 'War Room'}).start()
+            
+        else:
+            self._load_stylesheet() # Revert to default
+
+            self._load_stylesheet() # Revert to default
+
+    def on_no_distractions_toggled(self, active):
+        """Handle No Distractions toggle (Zen Mode) with Timer."""
+        logger.info(f"No Distractions Mode: {active}")
+        
+        if active:
+            # Ask for duration
+            minutes, ok = QInputDialog.getInt(self, "Zen Mode", "Duration (minutes):", 25, 1, 180, 1)
+            if ok:
+                # Zen Mode: Hide list + Timer
+                self.activity_list.hide()
+                self.setStyleSheet("QMainWindow { background-color: #000000; border-left: 1px solid #333; }")
+                
+                # Start Timer
+                self.zen_seconds_remaining = minutes * 60
+                self.zen_timer = QTimer(self)
+                self.zen_timer.timeout.connect(self._update_zen_timer)
+                self.zen_timer.start(1000)
+                self._update_zen_timer() # Initial update
+            else:
+                # Cancelled: reset button without triggering logic again
+                self.control_deck.btn_distractions.blockSignals(True)
+                self.control_deck.btn_distractions.setChecked(False)
+                self.control_deck.btn_distractions.blockSignals(False)
+        else:
+            # Deactivate
+            if hasattr(self, 'zen_timer') and self.zen_timer.isActive():
+                self.zen_timer.stop()
+            self.control_deck.set_distraction_text("NO DISTRACTIONS")
+            self.activity_list.show()
+            self._load_stylesheet() # Restore theme
+
+    def _update_zen_timer(self):
+        """Update countdown text."""
+        if self.zen_seconds_remaining > 0:
+            mins, secs = divmod(self.zen_seconds_remaining, 60)
+            self.control_deck.set_distraction_text(f"ZEN: {mins:02d}:{secs:02d}")
+            self.zen_seconds_remaining -= 1
+        else:
+            # Time up
+            self.zen_timer.stop()
+            self.control_deck.btn_distractions.setChecked(False) # Will trigger toggle(False)
 
     def on_mesh_info(self, info):
         """Pass mesh info to sync worker for heartbeat."""
