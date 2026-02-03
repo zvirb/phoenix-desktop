@@ -47,6 +47,8 @@ class RequestQueue:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
+                # Optimize queue retrieval: Add index for priority and creation time
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_queue_priority_created ON request_queue (priority DESC, created_at ASC)")
                 conn.commit()
         except Exception as e:
             logger.error(f"Failed to initialize queue DB: {e}")
