@@ -120,33 +120,31 @@ function App() {
 
   return (
     <main className="omnibox-container">
-      <div className="search-bar">
-        {/* ... (Search Bar content) ... */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <input
-            autoFocus
-            type="text"
-            aria-label="Task description"
-            placeholder="What are you working on?"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                const val = e.currentTarget.value;
-                handleDecompose(val);
-                e.currentTarget.value = "";
-              }
-            }}
-            style={{ flex: 1 }}
-          />
-          <button
-            aria-label="Capture screenshot"
-            title="Capture screenshot"
-            onClick={() => {
-              invoke('trigger_capture');
-              setLogs(prev => ["[Capture] Manual Trigger Sent", ...prev]);
-            }}
-          >📷</button>
-        </div>
-        {loading && <span style={{ marginLeft: 10 }}>Processing...</span>}
+      <div className="search-bar" aria-busy={loading}>
+        <input
+          autoFocus
+          type="text"
+          aria-label="Task description"
+          disabled={loading}
+          placeholder={loading ? "Thinking..." : "What are you working on?"}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              const val = e.currentTarget.value;
+              handleDecompose(val);
+              e.currentTarget.value = "";
+            }
+          }}
+          style={{ flex: 1 }}
+        />
+        {loading && <div className="spinner" role="status" aria-label="Processing"></div>}
+        <button
+          aria-label="Capture screenshot"
+          title="Capture screenshot"
+          onClick={() => {
+            invoke('trigger_capture');
+            setLogs(prev => ["[Capture] Manual Trigger Sent", ...prev]);
+          }}
+        >📷</button>
       </div>
 
       {subtasks.length > 0 && (
