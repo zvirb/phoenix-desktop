@@ -13,6 +13,7 @@ function App() {
   const [subtasks, setSubtasks] = useState<string[]>([]);
   const [currentWindow, setCurrentWindow] = useState("Unknown");
   const [showSettings, setShowSettings] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const unlistenPromise = listen<string>('telemetry', (event) => {
@@ -44,8 +45,6 @@ function App() {
       unlistenPromise.then(unlisten => unlisten());
     };
   }, []);
-
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // ... existing effect ...
@@ -127,7 +126,8 @@ function App() {
             autoFocus
             type="text"
             aria-label="Task description"
-            placeholder="What are you working on?"
+            disabled={loading}
+            placeholder={loading ? "Thinking..." : "What are you working on?"}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 const val = e.currentTarget.value;
@@ -135,7 +135,7 @@ function App() {
                 e.currentTarget.value = "";
               }
             }}
-            style={{ flex: 1 }}
+            style={{ flex: 1, opacity: loading ? 0.5 : 1 }}
           />
           <button
             aria-label="Capture screenshot"
