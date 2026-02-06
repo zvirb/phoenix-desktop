@@ -15,36 +15,6 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const unlistenPromise = listen<string>('telemetry', (event) => {
-      try {
-        const payload = JSON.parse(event.payload);
-
-        if (payload.event !== "context_update") {
-          setLogs(prev => [`[${new Date().toLocaleTimeString()}] ${payload.event}`, ...prev].slice(0, 5));
-        }
-
-        if (payload.event === "context_update") {
-          setStatus(payload.payload.status);
-          setActiveTime(payload.payload.active_time_seconds);
-          setIsAgent(payload.payload.is_agent_activity);
-          setCurrentWindow(payload.payload.current_window || "Unknown");
-        } else if (payload.event === "ready") {
-          setStatus("Connected");
-          if (payload.payload.token) {
-            setToken(payload.payload.token);
-            setLogs(prev => ["Token received", ...prev]);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to parse telemetry:", e);
-      }
-    });
-
-    return () => {
-      unlistenPromise.then(unlisten => unlisten());
-    };
-  }, []);
 
   useEffect(() => {
     // ... existing effect ...
