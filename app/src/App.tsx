@@ -119,8 +119,7 @@ function App() {
 
   return (
     <main className="omnibox-container">
-      <div className="search-bar">
-        {/* ... (Search Bar content) ... */}
+<div className="search-bar" aria-busy={loading}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <input
             autoFocus
@@ -135,8 +134,9 @@ function App() {
                 e.currentTarget.value = "";
               }
             }}
-            style={{ flex: 1, opacity: loading ? 0.5 : 1 }}
+            style={{ flex: 1 }}
           />
+          {loading && <div className="spinner" role="status" aria-label="Processing"></div>}
           <button
             aria-label="Capture screenshot"
             title="Capture screenshot"
@@ -146,7 +146,7 @@ function App() {
             }}
           >📷</button>
         </div>
-        {loading && <span style={{ marginLeft: 10 }}>Processing...</span>}
+      </div>
       </div>
 
       {subtasks.length > 0 && (
