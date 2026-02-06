@@ -6,7 +6,10 @@ import pytest
 import sys
 import os
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
+
+# Mock winreg for non-windows environments
+sys.modules['winreg'] = MagicMock()
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -116,7 +119,7 @@ class TestConfig:
         mock_settings.get_phoenix_url.return_value = "https://test.com"
         
         config = Config()
-        assert config.heartbeat_url == "https://test.com/api/screentime/heartbeat"
+        assert config.heartbeat_url == "https://test.com/api/v1/screentime/heartbeat"
     
     @patch('config.settings_manager')
     def test_capture_url(self, mock_settings):
@@ -126,7 +129,7 @@ class TestConfig:
         mock_settings.get_phoenix_url.return_value = "https://test.com/"
         
         config = Config()
-        assert config.capture_url == "https://test.com/api/screentime/capture"
+        assert config.capture_url == "https://test.com/api/v1/screentime/capture"
 
 
 class TestConfigValidation:
@@ -148,6 +151,33 @@ class TestConfigValidation:
         config = Config()
         # Should not raise
         config.validate()
+
+    @patch('config.settings_manager')
+    def test_validate_allows_ip_localhost(self, mock_settings):
+        """Test validation allows 127.0.0.1 HTTP."""
+        from config import Config
+
+        mock_settings.get_phoenix_url.return_value = "http://127.0.0.1:8000"
+        mock_settings.get_capture_interval.return_value = 60
+        mock_settings.get_similarity_threshold.return_value = 0.95
+        mock_settings.get_setting.side_effect = lambda key, default: {
+            'jpeg_quality': 70
+        }.get(key, default)
+
+        config = Config()
+        # Should not raise
+        config.validate()
+
+    @patch('config.settings_manager')
+    def test_validate_blocks_fake_localhost(self, mock_settings):
+        """Test validation blocks fake localhost domains (e.g. localhost.evil.com)."""
+        from config import Config
+
+        mock_settings.get_phoenix_url.return_value = "http://localhost.evil.com"
+
+        config = Config()
+        with pytest.raises(ValueError, match="must use HTTPS"):
+            config.validate()
     
     @patch('config.os.getenv')
     @patch('config.settings_manager')
