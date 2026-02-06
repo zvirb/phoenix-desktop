@@ -13,6 +13,7 @@ function App() {
   const [subtasks, setSubtasks] = useState<string[]>([]);
   const [currentWindow, setCurrentWindow] = useState("Unknown");
   const [showSettings, setShowSettings] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const unlistenPromise = listen<string>('telemetry', (event) => {
@@ -44,8 +45,6 @@ function App() {
       unlistenPromise.then(unlisten => unlisten());
     };
   }, []);
-
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // ... existing effect ...
@@ -120,31 +119,34 @@ function App() {
 
   return (
     <main className="omnibox-container">
-      <div className="search-bar" aria-busy={loading}>
-        <input
-          autoFocus
-          type="text"
-          aria-label="Task description"
-          disabled={loading}
-          placeholder={loading ? "Thinking..." : "What are you working on?"}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              const val = e.currentTarget.value;
-              handleDecompose(val);
-              e.currentTarget.value = "";
-            }
-          }}
-          style={{ flex: 1 }}
-        />
-        {loading && <div className="spinner" role="status" aria-label="Processing"></div>}
-        <button
-          aria-label="Capture screenshot"
-          title="Capture screenshot"
-          onClick={() => {
-            invoke('trigger_capture');
-            setLogs(prev => ["[Capture] Manual Trigger Sent", ...prev]);
-          }}
-        >📷</button>
+<div className="search-bar" aria-busy={loading}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <input
+            autoFocus
+            type="text"
+            aria-label="Task description"
+            disabled={loading}
+            placeholder={loading ? "Thinking..." : "What are you working on?"}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const val = e.currentTarget.value;
+                handleDecompose(val);
+                e.currentTarget.value = "";
+              }
+            }}
+            style={{ flex: 1 }}
+          />
+          {loading && <div className="spinner" role="status" aria-label="Processing"></div>}
+          <button
+            aria-label="Capture screenshot"
+            title="Capture screenshot"
+            onClick={() => {
+              invoke('trigger_capture');
+              setLogs(prev => ["[Capture] Manual Trigger Sent", ...prev]);
+            }}
+          >📷</button>
+        </div>
+      </div>
       </div>
 
       {subtasks.length > 0 && (

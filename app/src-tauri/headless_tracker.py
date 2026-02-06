@@ -172,12 +172,16 @@ class HeadlessTracker:
                     if not line:
                         continue
                         
-                    logger.info(f"Received command: {line}")
                     try:
                         cmd = json.loads(line)
-                        if cmd.get("command") == "capture":
+                        cmd_type = cmd.get("command")
+
+                        # Log command type only, not full payload which may contain PII
+                        logger.info(f"Received command: {cmd_type}")
+
+                        if cmd_type == "capture":
                             self.process_screenshot(is_manual=True)
-                        elif cmd.get("command") == "decompose":
+                        elif cmd_type == "decompose":
                             text = cmd.get("text", "")
                             self.decompose_task(text)
                     except json.JSONDecodeError:
@@ -185,15 +189,25 @@ class HeadlessTracker:
                 except Exception as e:
                     logger.error(f"Stdin error: {e}")
 
+        t = threading.Thread(target=listen, daemon=True)
+        t.start()
+
     def decompose_task(self, text):
         """Calls the decomposition API via the sidecar client."""
         try:
+             # Basic Validation
+             if not text or len(text) > 500:
+                 emit_event("decomposition_result", {"success": False, "error": "Input too long or empty"})
+                 return
+
              # Construct URL. Assuming /api/v1/preview-decompose exists on the stack
              # If using configured URL with path, we should be careful.
              # self.api_client.base_url might be "https://phoenix.aiwfe.com"
              url = f"{self.api_client.base_url.rstrip('/')}/api/v1/preview-decompose"
              
-             logger.info(f"Decomposing: {text} to {url}")
+             # Mask text in logs
+             masked_text = f"{text[:10]}..." if len(text) > 10 else "***"
+             logger.info(f"Decomposing: {masked_text} to {url}")
              
              import requests
              # Use the JWT token if available, else device token (fallback, though likely to fail)
@@ -214,11 +228,6 @@ class HeadlessTracker:
         except Exception as e:
             logger.error(f"Decompose Error: {e}")
             emit_event("decomposition_result", {"success": False, "error": str(e)})
-
-    # ... process_screenshot below ...
-        
-        t = threading.Thread(target=listen, daemon=True)
-        t.start()
 
     def connect_intervention_socket(self):
         """Connects to the Adaptive Intervention service via WebSocket."""
