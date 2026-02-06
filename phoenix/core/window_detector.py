@@ -22,6 +22,8 @@ class WindowDetector:
     
     def __init__(self):
         """Initialize window detector."""
+        self._last_hwnd = None
+        self._last_app_name = None
         if not WINDOWS_AVAILABLE:
             logger.warning("Windows API not available. Window detection will be limited.")
     
@@ -45,6 +47,10 @@ class WindowDetector:
             
             # Get window title
             window_title = win32gui.GetWindowText(hwnd)
+
+            # Check cache
+            if self._last_hwnd == hwnd and self._last_app_name:
+                return self._last_app_name, window_title
             
             # Get process ID
             _, pid = win32process.GetWindowThreadProcessId(hwnd)
@@ -56,10 +62,16 @@ class WindowDetector:
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 app_name = "Unknown"
             
+            # Update cache
+            self._last_hwnd = hwnd
+            self._last_app_name = app_name
+
             return app_name, window_title
             
         except Exception as e:
             logger.debug(f"Failed to get active window: {e}")
+            self._last_hwnd = None
+            self._last_app_name = None
             return "Unknown", "Unknown"
 
     def _get_fallback_window(self) -> Tuple[str, str]:
