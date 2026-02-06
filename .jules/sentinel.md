@@ -13,3 +13,8 @@
 **Vulnerability:** Raw user input containing potential PII or secrets was being logged to disk in the sidecar's `decompose_task` and input listener.
 **Learning:** Background processes/sidecars often have separate logging configurations that miss centralized security policies.
 **Prevention:** Ensure all entry points (like stdin listeners) validate and sanitize input immediately upon receipt before logging.
+
+## 2026-02-06 - PII Leakage in Debug Logs
+**Vulnerability:** The `api_client.send_heartbeat` method was logging the full `data` payload (including `window_title`) at DEBUG level. While typical configurations use INFO, centralized logging setups (like `PhoenixLogger`) often default to DEBUG for file outputs, risking persistent PII storage.
+**Learning:** Debug logs are not safe zones; libraries must assume their debug output might be persisted in production environments.
+**Prevention:** Always create a sanitized copy of data structures containing PII before passing them to any logging function, even `debug()`.
