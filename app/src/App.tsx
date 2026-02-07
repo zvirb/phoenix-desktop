@@ -103,17 +103,33 @@ function App() {
             autoFocus
             type="text"
             aria-label="Task description"
+            value={taskInput}
+            onChange={(e) => setTaskInput(e.target.value)}
             disabled={loading}
             value={taskInput}
             onChange={(e) => setTaskInput(e.target.value)}
             placeholder={loading ? "Thinking..." : "What are you working on?"}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
+                handleDecompose(taskInput);
+                setTaskInput("");
                 handleSubmit();
               }
             }}
             style={{ flex: 1 }}
           />
+          <button
+            aria-label={loading ? "Processing task" : "Submit task"}
+            title="Submit task"
+            disabled={loading || !taskInput.trim()}
+            onClick={() => {
+              handleDecompose(taskInput);
+              setTaskInput("");
+            }}
+            style={{ minWidth: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+          >
+            {loading ? <div className="spinner" role="status" aria-label="Processing"></div> : "➤"}
+          </button>
           <button
             className="icon-button"
             aria-label={loading ? "Processing task" : "Submit task"}
