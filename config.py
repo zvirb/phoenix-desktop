@@ -5,6 +5,7 @@ Now loads settings from Windows Registry via WindowsSettingsManager.
 import os
 import socket
 from typing import List
+from urllib.parse import urlparse
 from windows_settings import settings_manager
 
 class Config:
@@ -111,7 +112,12 @@ class Config:
         if not self.PHOENIX_API_URL:
             raise ValueError("PHOENIX_API_URL must be set in Windows Settings")
         
-        if not self.PHOENIX_API_URL.startswith('https://') and 'localhost' not in self.PHOENIX_API_URL:
+        # Security: Prevent insecure HTTP unless strictly localhost
+        parsed = urlparse(self.PHOENIX_API_URL)
+        if parsed.scheme == 'http':
+            if parsed.hostname not in ('localhost', '127.0.0.1'):
+                raise ValueError("PHOENIX_API_URL must use HTTPS protocol (or localhost for testing)")
+        elif parsed.scheme != 'https':
             raise ValueError("PHOENIX_API_URL must use HTTPS protocol (or localhost for testing)")
         
         if self.CAPTURE_INTERVAL < 10:

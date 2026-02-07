@@ -13,39 +13,8 @@ function App() {
   const [subtasks, setSubtasks] = useState<string[]>([]);
   const [currentWindow, setCurrentWindow] = useState("Unknown");
   const [showSettings, setShowSettings] = useState(false);
-
-  useEffect(() => {
-    const unlistenPromise = listen<string>('telemetry', (event) => {
-      try {
-        const payload = JSON.parse(event.payload);
-
-        if (payload.event !== "context_update") {
-          setLogs(prev => [`[${new Date().toLocaleTimeString()}] ${payload.event}`, ...prev].slice(0, 5));
-        }
-
-        if (payload.event === "context_update") {
-          setStatus(payload.payload.status);
-          setActiveTime(payload.payload.active_time_seconds);
-          setIsAgent(payload.payload.is_agent_activity);
-          setCurrentWindow(payload.payload.current_window || "Unknown");
-        } else if (payload.event === "ready") {
-          setStatus("Connected");
-          if (payload.payload.token) {
-            setToken(payload.payload.token);
-            setLogs(prev => ["Token received", ...prev]);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to parse telemetry:", e);
-      }
-    });
-
-    return () => {
-      unlistenPromise.then(unlisten => unlisten());
-    };
-  }, []);
-
   const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
     // ... existing effect ...
@@ -120,14 +89,14 @@ function App() {
 
   return (
     <main className="omnibox-container">
-      <div className="search-bar">
-        {/* ... (Search Bar content) ... */}
+<div className="search-bar" aria-busy={loading}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <input
             autoFocus
             type="text"
             aria-label="Task description"
-            placeholder="What are you working on?"
+            disabled={loading}
+            placeholder={loading ? "Thinking..." : "What are you working on?"}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 const val = e.currentTarget.value;
@@ -137,6 +106,7 @@ function App() {
             }}
             style={{ flex: 1 }}
           />
+          {loading && <div className="spinner" role="status" aria-label="Processing"></div>}
           <button
             aria-label="Capture screenshot"
             title="Capture screenshot"
@@ -146,7 +116,7 @@ function App() {
             }}
           >📷</button>
         </div>
-        {loading && <span style={{ marginLeft: 10 }}>Processing...</span>}
+      </div>
       </div>
 
       {subtasks.length > 0 && (
