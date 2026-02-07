@@ -14,6 +14,7 @@ function App() {
   const [currentWindow, setCurrentWindow] = useState("Unknown");
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [taskInput, setTaskInput] = useState("");
 
 
   useEffect(() => {
@@ -87,27 +88,65 @@ function App() {
     }
   };
 
+  const handleSubmit = () => {
+    if (taskInput.trim()) {
+      handleDecompose(taskInput);
+      setTaskInput("");
+    }
+  };
+
   return (
     <main className="omnibox-container">
-<div className="search-bar" aria-busy={loading}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+      <div className="search-bar" aria-busy={loading}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', width: '100%' }}>
           <input
             autoFocus
             type="text"
             aria-label="Task description"
+            value={taskInput}
+            onChange={(e) => setTaskInput(e.target.value)}
             disabled={loading}
+            value={taskInput}
+            onChange={(e) => setTaskInput(e.target.value)}
             placeholder={loading ? "Thinking..." : "What are you working on?"}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                const val = e.currentTarget.value;
-                handleDecompose(val);
-                e.currentTarget.value = "";
+                handleDecompose(taskInput);
+                setTaskInput("");
+                handleSubmit();
               }
             }}
             style={{ flex: 1 }}
           />
-          {loading && <div className="spinner" role="status" aria-label="Processing"></div>}
           <button
+            aria-label={loading ? "Processing task" : "Submit task"}
+            title="Submit task"
+            disabled={loading || !taskInput.trim()}
+            onClick={() => {
+              handleDecompose(taskInput);
+              setTaskInput("");
+            }}
+            style={{ minWidth: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+          >
+            {loading ? <div className="spinner" role="status" aria-label="Processing"></div> : "➤"}
+          </button>
+          <button
+            className="icon-button"
+            aria-label={loading ? "Processing task" : "Submit task"}
+            title="Submit task"
+            disabled={loading || !taskInput.trim()}
+            onClick={handleSubmit}
+          >
+            {loading ? (
+              <div className="spinner" role="status" aria-label="Processing"></div>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+          <button
+            className="icon-button"
             aria-label="Capture screenshot"
             title="Capture screenshot"
             onClick={() => {
@@ -116,7 +155,6 @@ function App() {
             }}
           >📷</button>
         </div>
-      </div>
       </div>
 
       {subtasks.length > 0 && (
