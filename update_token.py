@@ -1,6 +1,7 @@
 """
 Quick script to update the authentication token.
 """
+import getpass
 from token_manager import TokenManager
 
 print("=" * 60)
@@ -15,7 +16,7 @@ print("4. Name it: tufboi")
 print("5. Copy the token and paste it below")
 print()
 
-token = input("Enter your new device token: ").strip()
+token = getpass.getpass("Enter your new device token: ").strip()
 
 if not token:
     print("❌ No token provided. Update cancelled.")

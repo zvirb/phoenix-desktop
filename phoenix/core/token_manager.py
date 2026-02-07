@@ -3,6 +3,7 @@ Secure token management for Phoenix Desktop Tracker.
 Uses Windows Credential Manager to securely store authentication tokens.
 """
 import sys
+import getpass
 from typing import Optional
 
 try:
@@ -171,7 +172,7 @@ class TokenManager:
         print("5. Copy the token and paste it below")
         print()
         
-        token = input("Enter your device token: ").strip()
+        token = getpass.getpass("Enter your device token: ").strip()
         
         if not token:
             print("❌ No token provided. Setup cancelled.")
