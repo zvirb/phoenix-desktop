@@ -14,6 +14,7 @@ function App() {
   const [currentWindow, setCurrentWindow] = useState("Unknown");
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [taskInput, setTaskInput] = useState("");
 
 
   useEffect(() => {
@@ -95,18 +96,30 @@ function App() {
             autoFocus
             type="text"
             aria-label="Task description"
+            value={taskInput}
+            onChange={(e) => setTaskInput(e.target.value)}
             disabled={loading}
             placeholder={loading ? "Thinking..." : "What are you working on?"}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                const val = e.currentTarget.value;
-                handleDecompose(val);
-                e.currentTarget.value = "";
+                handleDecompose(taskInput);
+                setTaskInput("");
               }
             }}
             style={{ flex: 1 }}
           />
-          {loading && <div className="spinner" role="status" aria-label="Processing"></div>}
+          <button
+            aria-label={loading ? "Processing task" : "Submit task"}
+            title="Submit task"
+            disabled={loading || !taskInput.trim()}
+            onClick={() => {
+              handleDecompose(taskInput);
+              setTaskInput("");
+            }}
+            style={{ minWidth: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+          >
+            {loading ? <div className="spinner" role="status" aria-label="Processing"></div> : "➤"}
+          </button>
           <button
             aria-label="Capture screenshot"
             title="Capture screenshot"
@@ -116,7 +129,6 @@ function App() {
             }}
           >📷</button>
         </div>
-      </div>
       </div>
 
       {subtasks.length > 0 && (
