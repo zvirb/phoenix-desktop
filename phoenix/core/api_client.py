@@ -221,7 +221,13 @@ class APIClient:
         if tailscale_ip is not None:
             data['tailscale_ip'] = tailscale_ip
         
-        logger.debug(f"Heartbeat data: {data}")
+        # Mask sensitive data in logs
+        safe_data = data.copy()
+        title = safe_data.get('window_title') or ''
+        if len(title) > 10:
+            safe_data['window_title'] = f"{title[:10]}..."
+
+        logger.debug(f"Heartbeat data: {safe_data}")
         return self._make_request('POST', '/api/v1/screentime/heartbeat', json=data)
 
     def upload_screenshot(self, image_bytes: bytes) -> Dict[str, Any]:
