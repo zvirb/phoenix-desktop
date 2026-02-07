@@ -13,3 +13,8 @@
 **Vulnerability:** Raw user input containing potential PII or secrets was being logged to disk in the sidecar's `decompose_task` and input listener.
 **Learning:** Background processes/sidecars often have separate logging configurations that miss centralized security policies.
 **Prevention:** Ensure all entry points (like stdin listeners) validate and sanitize input immediately upon receipt before logging.
+
+## 2026-06-02 - Plaintext Token Entry
+**Vulnerability:** The device token was requested using `input()` in `update_token.py` and `phoenix/core/token_manager.py`, exposing the token in plaintext on the console during setup.
+**Learning:** Standard input functions like `input()` are not secure for sensitive data entry as they echo characters to the screen and may be captured in shell history.
+**Prevention:** Always use `getpass.getpass()` for sensitive inputs like passwords and tokens to mask the input.
