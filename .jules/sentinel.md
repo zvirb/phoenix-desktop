@@ -18,3 +18,8 @@
 **Vulnerability:** The `api_client.send_heartbeat` method was logging the full `data` payload (including `window_title`) at DEBUG level. While typical configurations use INFO, centralized logging setups (like `PhoenixLogger`) often default to DEBUG for file outputs, risking persistent PII storage.
 **Learning:** Debug logs are not safe zones; libraries must assume their debug output might be persisted in production environments.
 **Prevention:** Always create a sanitized copy of data structures containing PII before passing them to any logging function, even `debug()`.
+
+## 2026-06-02 - Plaintext Token Entry
+**Vulnerability:** The device token was requested using `input()` in `update_token.py` and `phoenix/core/token_manager.py`, exposing the token in plaintext on the console during setup.
+**Learning:** Standard input functions like `input()` are not secure for sensitive data entry as they echo characters to the screen and may be captured in shell history.
+**Prevention:** Always use `getpass.getpass()` for sensitive inputs like passwords and tokens to mask the input.

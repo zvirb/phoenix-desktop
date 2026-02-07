@@ -24,6 +24,7 @@ class WindowDetector:
         """Initialize window detector."""
         self._last_hwnd = None
         self._last_app_name = None
+        self._pid_cache = {}
         if not WINDOWS_AVAILABLE:
             logger.warning("Windows API not available. Window detection will be limited.")
     
@@ -55,12 +56,23 @@ class WindowDetector:
             # Get process ID
             _, pid = win32process.GetWindowThreadProcessId(hwnd)
             
-            # Get process name
-            try:
-                process = psutil.Process(pid)
-                app_name = process.name()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                app_name = "Unknown"
+            # Check PID cache first
+            if pid in self._pid_cache:
+                app_name = self._pid_cache[pid]
+            else:
+                # Get process name
+                try:
+                    process = psutil.Process(pid)
+                    app_name = process.name()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    app_name = "Unknown"
+
+                # Update PID cache
+                self._pid_cache[pid] = app_name
+
+                # Prevent cache from growing too large
+                if len(self._pid_cache) > 100:
+                    self._pid_cache.clear()
             
             # Update cache
             self._last_hwnd = hwnd
