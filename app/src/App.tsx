@@ -18,6 +18,16 @@ function App() {
 
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showSettings) {
+        setShowSettings(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSettings]);
+
+  useEffect(() => {
     // ... existing effect ...
     const unlistenPromise = listen<string>('telemetry', (event) => {
       try {
@@ -115,15 +125,6 @@ function App() {
             style={{ flex: 1 }}
           />
           <button
-            aria-label={loading ? "Processing task" : "Submit task"}
-            title="Submit task"
-            disabled={loading || !taskInput.trim()}
-            onClick={handleSubmit}
-            style={{ minWidth: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-          >
-            {loading ? <div className="spinner" role="status" aria-label="Processing"></div> : "➤"}
-          </button>
-          <button
             className="icon-button"
             aria-label={loading ? "Processing task" : "Submit task"}
             title="Submit task"
@@ -146,7 +147,12 @@ function App() {
               invoke('trigger_capture');
               setLogs(prev => ["[Capture] Manual Trigger Sent", ...prev]);
             }}
-          >📷</button>
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </button>
         </div>
       </div>
 
