@@ -8,8 +8,44 @@ import os
 import traceback
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any, List
 import functools
+
+
+# Sensitive keys that should be redacted from logs
+SENSITIVE_KEYS = {
+    'password', 'token', 'secret', 'key', 'auth', 'credential',
+    'private', 'api_key', 'access_token', 'refresh_token'
+}
+
+
+def sanitize_data(data: Any, depth: int = 0) -> Any:
+    """
+    Recursively sanitize data to redact sensitive information.
+
+    Args:
+        data: The data to sanitize (dict, list, or other)
+        depth: Current recursion depth (internal use)
+
+    Returns:
+        Sanitized copy of the data
+    """
+    # Prevent infinite recursion for circular references
+    if depth > 10:
+        return "<Recursion Limit Reached>"
+
+    if isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            if isinstance(k, str) and any(s in k.lower() for s in SENSITIVE_KEYS):
+                new_data[k] = "***REDACTED***"
+            else:
+                new_data[k] = sanitize_data(v, depth + 1)
+        return new_data
+    elif isinstance(data, list):
+        return [sanitize_data(item, depth + 1) for item in data]
+    else:
+        return data
 
 
 class PhoenixLogger:
@@ -25,7 +61,7 @@ class PhoenixLogger:
         self.name = name
         self.app_data_dir = Path(os.environ.get('LOCALAPPDATA', os.path.expanduser('~'))) / "PhoenixTracker"
         self.log_dir = self.app_data_dir / "logs"
-        self.log_dir.mkdir(exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         
         # Create unique log file name with timestamp (including microseconds for uniqueness)
         now = datetime.now()
@@ -123,8 +159,9 @@ class PhoenixLogger:
         self.logger.error(f"Exception type: {type(exc).__name__}")
         self.logger.error(f"Exception message: {str(exc)}")
         
-        # Log additional context
-        for key, value in kwargs.items():
+        # Log additional context (sanitized)
+        sanitized_kwargs = sanitize_data(kwargs)
+        for key, value in sanitized_kwargs.items():
             self.logger.error(f"{key}: {value}")
         
         # Log full traceback
@@ -133,12 +170,14 @@ class PhoenixLogger:
     
     def log_function_call(self, func_name: str, **kwargs):
         """Log a function call with parameters."""
-        params = ", ".join(f"{k}={v}" for k, v in kwargs.items())
+        sanitized_kwargs = sanitize_data(kwargs)
+        params = ", ".join(f"{k}={v}" for k, v in sanitized_kwargs.items())
         self.logger.debug(f"CALL: {func_name}({params})")
     
     def log_function_return(self, func_name: str, return_value):
         """Log a function return value."""
-        self.logger.debug(f"RETURN: {func_name} -> {return_value}")
+        sanitized_return = sanitize_data(return_value)
+        self.logger.debug(f"RETURN: {func_name} -> {sanitized_return}")
     
     def log_state_change(self, component: str, old_state, new_state):
         """Log a state change in the application."""
@@ -222,7 +261,7 @@ def logged_method(func):
         func_name = f"{func.__qualname__}"
         
         # Build parameter string (avoid logging sensitive data)
-        safe_kwargs = {k: v for k, v in kwargs.items() if 'token' not in k.lower() and 'password' not in k.lower()}
+        safe_kwargs = sanitize_data(kwargs)
         params_str = ", ".join(f"{k}={v}" for k, v in safe_kwargs.items())
         
         logger.debug(f"→ CALL: {func_name}({params_str})")
@@ -231,7 +270,8 @@ def logged_method(func):
             result = func(*args, **kwargs)
             
             # Log return (truncate long results)
-            result_str = str(result)
+            sanitized_result = sanitize_data(result)
+            result_str = str(sanitized_result)
             if len(result_str) > 100:
                 result_str = result_str[:100] + "..."
             

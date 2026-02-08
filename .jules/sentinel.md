@@ -23,3 +23,8 @@
 **Vulnerability:** The device token was requested using `input()` in `update_token.py` and `phoenix/core/token_manager.py`, exposing the token in plaintext on the console during setup.
 **Learning:** Standard input functions like `input()` are not secure for sensitive data entry as they echo characters to the screen and may be captured in shell history.
 **Prevention:** Always use `getpass.getpass()` for sensitive inputs like passwords and tokens to mask the input.
+
+## 2026-02-08 - Nested Dictionary and Return Value Leakage in Logs
+**Vulnerability:** The `@logged_method` decorator and `PhoenixLogger` were logging function arguments (kwargs) and return values using `str()`, which exposed sensitive data nested within dictionaries (e.g., `{'user': {'token': '...'}}`). Simple keyword filtering on the top-level keys missed these nested secrets.
+**Learning:** Shallow filtering of sensitive keys is insufficient for complex data structures; logging logic must be recursive to catch secrets buried deep in objects.
+**Prevention:** Implement a recursive sanitization function with depth limits and cycle detection to redact sensitive keys at any level before logging.
