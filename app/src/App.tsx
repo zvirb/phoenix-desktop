@@ -106,13 +106,9 @@ function App() {
             value={taskInput}
             onChange={(e) => setTaskInput(e.target.value)}
             disabled={loading}
-            value={taskInput}
-            onChange={(e) => setTaskInput(e.target.value)}
             placeholder={loading ? "Thinking..." : "What are you working on?"}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                handleDecompose(taskInput);
-                setTaskInput("");
                 handleSubmit();
               }
             }}
@@ -122,10 +118,7 @@ function App() {
             aria-label={loading ? "Processing task" : "Submit task"}
             title="Submit task"
             disabled={loading || !taskInput.trim()}
-            onClick={() => {
-              handleDecompose(taskInput);
-              setTaskInput("");
-            }}
+            onClick={handleSubmit}
             style={{ minWidth: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
           >
             {loading ? <div className="spinner" role="status" aria-label="Processing"></div> : "➤"}
