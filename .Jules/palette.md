@@ -11,3 +11,7 @@
 ## 2025-10-25 - Integrated Action Feedback
 **Learning:** Placing loading indicators (spinners) directly inside the primary action button rather than as a separate element preserves layout stability and reinforces the connection between the action (Submit) and the process (Loading).
 **Action:** For single-action forms or inputs, replace the submit icon/text with a spinner during loading states to save space and provide direct feedback.
+
+## 2026-02-08 - Desktop Expectations in Web Tech
+**Learning:** In Tauri/Electron apps, users expect native desktop behaviors (like Esc to close dialogs) by default. Missing these interactions breaks the illusion of a native app more than visual discrepancies.
+**Action:** Always implement global keyboard shortcuts (Esc for modals, Enter for submission) in desktop-targeted web views.
