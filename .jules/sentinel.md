@@ -28,3 +28,8 @@
 **Vulnerability:** The `@logged_method` decorator and `PhoenixLogger` were logging function arguments (kwargs) and return values using `str()`, which exposed sensitive data nested within dictionaries (e.g., `{'user': {'token': '...'}}`). Simple keyword filtering on the top-level keys missed these nested secrets.
 **Learning:** Shallow filtering of sensitive keys is insufficient for complex data structures; logging logic must be recursive to catch secrets buried deep in objects.
 **Prevention:** Implement a recursive sanitization function with depth limits and cycle detection to redact sensitive keys at any level before logging.
+
+## 2026-10-27 - Unsanitized API Response Logging
+**Vulnerability:** The `APIClient` was logging the full JSON response body at DEBUG level using `logger.debug()`. This exposed sensitive data (like `access_token` and `Set-Cookie` headers returned by the server) in plain text in the log files.
+**Learning:** Even when requests are sanitized, responses can contain new secrets (session tokens, cookies) that must also be redacted before logging. Standard `logging` does not automatically sanitize arguments.
+**Prevention:** Always wrap API response objects in a sanitization function before passing them to any logger, especially when the response might contain authentication material.

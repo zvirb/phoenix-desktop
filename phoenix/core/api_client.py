@@ -7,6 +7,12 @@ import time
 import requests
 from typing import Optional, Dict, Any, Tuple
 from urllib.parse import urljoin
+try:
+    from phoenix_logging import sanitize_data
+except ImportError:
+    # Fallback if phoenix_logging is not in path
+    def sanitize_data(data, depth=0): return data
+
 from .request_queue import RequestQueue
 
 logger = logging.getLogger(__name__)
@@ -71,7 +77,11 @@ class APIClient:
             # 4. Success -> process queue and return JSON
             self.process_queue()
             result = response.json()
-            logger.debug(f"API Response from {endpoint}: {result}")
+
+            # Sanitize sensitive data before logging
+            safe_result = sanitize_data(result)
+            logger.debug(f"API Response from {endpoint}: {safe_result}")
+
             return result
             
         except requests.exceptions.HTTPError as e:
