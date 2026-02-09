@@ -15,7 +15,8 @@ import functools
 # Sensitive keys that should be redacted from logs
 SENSITIVE_KEYS = {
     'password', 'token', 'secret', 'key', 'auth', 'credential',
-    'private', 'api_key', 'access_token', 'refresh_token'
+    'private', 'api_key', 'access_token', 'refresh_token',
+    'cookie', 'session', 'bearer', 'jwt'
 }
 
 
