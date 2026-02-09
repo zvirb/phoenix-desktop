@@ -220,3 +220,40 @@ body {
     50% { opacity: 0.6; }
     100% { opacity: 1; }
 }
+
+/* Accessibility & Button Styles */
+.settings-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+}
+.settings-toggle:focus-visible {
+  outline: 2px solid #4ade80;
+  outline-offset: 2px;
+}
+
+.text-button {
+  background: transparent;
+  border: 1px solid #333;
+  color: #ccc;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.text-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: #555;
+}
+.text-button:focus-visible {
+  outline: 2px solid #4ade80;
+  outline-offset: 2px;
+}
+
+.icon-button:focus-visible {
+  outline: 2px solid #4ade80;
+  outline-offset: 2px;
+  background: rgba(255, 255, 255, 0.1);
+}

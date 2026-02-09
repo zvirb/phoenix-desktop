@@ -202,10 +202,10 @@ function App() {
       {/* Settings Panel */}
       <div style={{ position: 'fixed', bottom: 10, right: 10 }}>
         <button
+          className="settings-toggle"
           aria-label="Open settings"
           title="Open settings"
           onClick={() => setShowSettings(!showSettings)}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '20px' }}
         >⚙️</button>
       </div>
 
@@ -223,18 +223,23 @@ function App() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 id="settings-title">Settings</h2>
-            <button onClick={() => setShowSettings(false)}>Close</button>
+            <button
+              autoFocus
+              className="text-button"
+              aria-label="Close settings"
+              onClick={() => setShowSettings(false)}
+            >Close</button>
           </div>
 
           <div className="setting-item">
-            <label>API URL</label>
-            <input type="text" value={apiUrl} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
+            <label htmlFor="settings-api-url">API URL</label>
+            <input id="settings-api-url" type="text" value={apiUrl} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
             <small>Defined in Windows Registry</small>
           </div>
 
           <div className="setting-item">
-            <label>Device Token (Masked)</label>
-            <input type="text" value={token ? `${token.substring(0, 8)}...` : "Not Loaded"} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
+            <label htmlFor="settings-device-token">Device Token (Masked)</label>
+            <input id="settings-device-token" type="text" value={token ? `${token.substring(0, 8)}...` : "Not Loaded"} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
             <small>Stored in Windows Credential Manager</small>
           </div>
 
