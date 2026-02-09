@@ -264,9 +264,12 @@ class PhoenixTrayApp:
                     time.sleep(30)
                     continue
                 
-                # Check for gaming mode
-                if self.gaming_detector.is_gaming():
-                    game = self.gaming_detector.get_running_game()
+                # Get active window info early for optimization
+                app_name, _ = self.window_detector.get_active_window()
+
+                # Check for gaming mode (Optimized)
+                if self.gaming_detector.is_gaming(app_name):
+                    game = self.gaming_detector.get_running_game(app_name)
                     logger.info(f"🎮 Gaming detected ({game}), pausing for 5 minutes")
                     time.sleep(300)
                     continue

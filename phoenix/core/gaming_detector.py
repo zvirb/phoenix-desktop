@@ -24,14 +24,28 @@ class GamingDetector:
         # Ensure all process names are lowercase for comparison
         self.gaming_processes = [p.lower() for p in self.gaming_processes]
     
-    def is_gaming(self) -> bool:
+    def is_gaming(self, active_process_name: str = None) -> bool:
         """
         Check if a gaming process is currently running.
         
+        Args:
+            active_process_name: Optional name of the currently active process.
+                               If provided, only checks this process (much faster).
+
         Returns:
             True if gaming detected, False otherwise
         """
         try:
+            # Fast path: Check active process if provided
+            if active_process_name:
+                if active_process_name.lower() in self.gaming_processes:
+                    logger.info(f"Gaming detected (active window): {active_process_name}")
+                    return True
+                # If active process is known and not a game, assume not gaming
+                # This skips the expensive full process scan
+                return False
+
+            # Slow path: Check all running processes
             for proc in psutil.process_iter(['name']):
                 try:
                     process_name = proc.info['name'].lower()
@@ -47,14 +61,24 @@ class GamingDetector:
             logger.error(f"Error checking gaming processes: {e}")
             return False
     
-    def get_running_game(self) -> str:
+    def get_running_game(self, active_process_name: str = None) -> str:
         """
         Get the name of the currently running game, if any.
         
+        Args:
+            active_process_name: Optional name of the currently active process.
+
         Returns:
             Name of the game process, or empty string if none detected
         """
         try:
+            # Fast path
+            if active_process_name:
+                if active_process_name.lower() in self.gaming_processes:
+                    return active_process_name
+                return ""
+
+            # Slow path
             for proc in psutil.process_iter(['name']):
                 try:
                     process_name = proc.info['name'].lower()
