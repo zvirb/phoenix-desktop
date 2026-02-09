@@ -43,7 +43,8 @@ class ContextWorker(QThread):
                 # 1. Check Window State
                 app_name, window_title = self.window_detector.get_active_window()
                 is_idle = self.window_detector.is_idle(self.idle_threshold)
-                is_gaming = self.gaming_detector.is_gaming()
+                # Pass app_name to optimize gaming check (skips full process scan)
+                is_gaming = self.gaming_detector.is_gaming(app_name)
 
                 # Emit Status Change if needed
                 if is_idle != self.is_idle_state or is_gaming != self.is_gaming_state:

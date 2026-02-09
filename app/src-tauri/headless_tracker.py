@@ -303,6 +303,9 @@ class HeadlessTracker:
             try:
                 now = time.time()
                 
+                # 0. Get Active Window (needed for context and optimization)
+                active_app, _ = self.window_detector.get_active_window()
+
                 # 1. Update Context (Active/Idle) using WindowDetector
                 # Note: window_detector uses GetLastInputInfo which is global (human) usage
                 # But it doesn't distinguish simulated vs real unless we hook LL hooks.
@@ -315,9 +318,9 @@ class HeadlessTracker:
                 # We emit this frequently (every 5s? or only on change?)
                 # Requirement implies strict compliance, doing it on heartbeat cadence matching 'context_update'
                 
-                # 2. Check Gaming
-                if self.gaming_detector.is_gaming():
-                     emit_event("status", {"mode": "gaming", "game": self.gaming_detector.get_running_game()})
+                # 2. Check Gaming (Optimized)
+                if self.gaming_detector.is_gaming(active_app):
+                     emit_event("status", {"mode": "gaming", "game": self.gaming_detector.get_running_game(active_app)})
                      time.sleep(60)
                      continue
                 

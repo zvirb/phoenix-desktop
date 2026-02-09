@@ -12,8 +12,19 @@ try:
     import win32gui
     import win32process
     import psutil
+    import ctypes
+
+    # Pre-define ctypes structures and libraries for performance
+    class LASTINPUTINFO(ctypes.Structure):
+        _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
+
+    # Optimizing tight loop access to DLLs
+    _user32 = ctypes.windll.user32
+    _kernel32 = ctypes.windll.kernel32
+
     WINDOWS_AVAILABLE = True
-except ImportError:
+except (ImportError, AttributeError):
+    # AttributeError can happen if ctypes.windll is not available (Linux)
     WINDOWS_AVAILABLE = False
 
 
@@ -116,16 +127,12 @@ class WindowDetector:
             return 0.0
             
         try:
-            import ctypes
-            
-            class LASTINPUTINFO(ctypes.Structure):
-                _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
-                
+            # Use pre-loaded libraries and structures (defined at module level)
             lastInputInfo = LASTINPUTINFO()
             lastInputInfo.cbSize = ctypes.sizeof(LASTINPUTINFO)
             
-            if ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lastInputInfo)):
-                millis = ctypes.windll.kernel32.GetTickCount() - lastInputInfo.dwTime
+            if _user32.GetLastInputInfo(ctypes.byref(lastInputInfo)):
+                millis = _kernel32.GetTickCount() - lastInputInfo.dwTime
                 return millis / 1000.0
             return 0.0
         except Exception:

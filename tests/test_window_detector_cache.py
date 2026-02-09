@@ -8,6 +8,17 @@ sys.modules['win32gui'] = MagicMock()
 sys.modules['win32process'] = MagicMock()
 sys.modules['psutil'] = MagicMock()
 
+# Mock ctypes to ensure WINDOWS_AVAILABLE = True in the module
+import ctypes
+# We need to ensure ctypes.windll exists
+if not hasattr(ctypes, 'windll'):
+    # On Linux, define a dummy windll
+    class MockWindll:
+        pass
+    ctypes.windll = MockWindll()
+    ctypes.windll.user32 = MagicMock()
+    ctypes.windll.kernel32 = MagicMock()
+
 # Import the class to test
 # We need to make sure we import it correctly
 from phoenix.core.window_detector import WindowDetector
