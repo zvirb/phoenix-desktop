@@ -28,6 +28,9 @@ except (ImportError, AttributeError):
     WINDOWS_AVAILABLE = False
 
 
+# Shared PID cache to avoid redundant process lookups across instances
+_pid_cache = {}
+
 class WindowDetector:
     """Detect active window and application."""
     
@@ -35,8 +38,13 @@ class WindowDetector:
         """Initialize window detector."""
         self._last_hwnd = None
         self._last_app_name = None
-        self._pid_cache = {}
-        if not WINDOWS_AVAILABLE:
+
+        # Pre-allocate LASTINPUTINFO structure for get_idle_time
+        if WINDOWS_AVAILABLE:
+            self._lastInputInfo = LASTINPUTINFO()
+            self._lastInputInfo.cbSize = ctypes.sizeof(LASTINPUTINFO)
+        else:
+            self._lastInputInfo = None
             logger.warning("Windows API not available. Window detection will be limited.")
     
     def get_active_window(self) -> Tuple[str, str]:
@@ -67,9 +75,9 @@ class WindowDetector:
             # Get process ID
             _, pid = win32process.GetWindowThreadProcessId(hwnd)
             
-            # Check PID cache first
-            if pid in self._pid_cache:
-                app_name = self._pid_cache[pid]
+            # Check PID cache first (shared module-level cache)
+            if pid in _pid_cache:
+                app_name = _pid_cache[pid]
             else:
                 # Get process name
                 try:
@@ -79,11 +87,11 @@ class WindowDetector:
                     app_name = "Unknown"
 
                 # Update PID cache
-                self._pid_cache[pid] = app_name
+                _pid_cache[pid] = app_name
 
                 # Prevent cache from growing too large
-                if len(self._pid_cache) > 100:
-                    self._pid_cache.clear()
+                if len(_pid_cache) > 100:
+                    _pid_cache.clear()
             
             # Update cache
             self._last_hwnd = hwnd
@@ -123,16 +131,13 @@ class WindowDetector:
 
     def get_idle_time(self) -> float:
         """Get number of seconds since last user input."""
-        if not WINDOWS_AVAILABLE:
+        if not WINDOWS_AVAILABLE or self._lastInputInfo is None:
             return 0.0
             
         try:
-            # Use pre-loaded libraries and structures (defined at module level)
-            lastInputInfo = LASTINPUTINFO()
-            lastInputInfo.cbSize = ctypes.sizeof(LASTINPUTINFO)
-            
-            if _user32.GetLastInputInfo(ctypes.byref(lastInputInfo)):
-                millis = _kernel32.GetTickCount() - lastInputInfo.dwTime
+            # Reuse pre-allocated structure
+            if _user32.GetLastInputInfo(ctypes.byref(self._lastInputInfo)):
+                millis = _kernel32.GetTickCount() - self._lastInputInfo.dwTime
                 return millis / 1000.0
             return 0.0
         except Exception:

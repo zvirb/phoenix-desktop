@@ -80,12 +80,12 @@ class ContextWorker(QThread):
                 sct_img = sct.grab(monitor)
                 img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
                 
-                # Resize (Standardize)
-                max_width = 1024
-                img.thumbnail((max_width, max_width))
-                
                 # Check for significant change (MSE)
+                # Optimization: Check on full image first to avoid expensive thumbnail resize if no change
                 if self.activity_detector.has_significant_change(img):
+                    # Resize (Standardize)
+                    max_width = 1024
+                    img.thumbnail((max_width, max_width))
                     # Convert to JPEG
                     buffer = BytesIO()
                     img.save(buffer, format="JPEG", quality=70)

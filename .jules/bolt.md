@@ -20,3 +20,7 @@
 ## 2026-02-08 - Reduced ctypes Overhead in WindowDetector
 **Learning:** `WindowDetector.get_idle_time` was defining a `ctypes.Structure` class and importing `ctypes` inside the function, which is called every second. This added ~50µs overhead per call and created unnecessary Python objects. Moving definitions to the module level eliminated this overhead.
 **Action:** Avoid defining classes or importing modules inside frequently called loops. Pre-allocate structures and library handles at module level or `__init__`.
+
+## 2026-02-09 - Defer Expensive Image Operations
+**Learning:** `process_screenshot` was capturing, resizing (1920->1024), and JPEG compressing *every* captured frame before checking for significant changes. By checking for changes on the raw captured image *first* (using a fast resize-check), we avoid the expensive high-quality resize and JPEG compression for the 90%+ of cases where the screen hasn't changed.
+**Action:** In processing pipelines, perform cheap "gating" checks (like diffs) as early as possible on raw data before performing expensive transformations (resize, encode, upload).
