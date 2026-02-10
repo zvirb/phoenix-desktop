@@ -202,50 +202,61 @@ function App() {
       {/* Settings Panel */}
       <div style={{ position: 'fixed', bottom: 10, right: 10 }}>
         <button
-          className="settings-toggle"
+          className="icon-button"
           aria-label="Open settings"
           title="Open settings"
           onClick={() => setShowSettings(!showSettings)}
-        >⚙️</button>
+          style={{ background: '#252526', border: '1px solid #333' }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H15.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
       </div>
 
       {showSettings && (
         <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="settings-title"
-          className="settings-modal"
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.9)', padding: 20, zIndex: 100,
-            display: 'flex', flexDirection: 'column', gap: 15
-          }}
+          className="settings-backdrop"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowSettings(false); }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 id="settings-title">Settings</h2>
-            <button
-              autoFocus
-              className="text-button"
-              aria-label="Close settings"
-              onClick={() => setShowSettings(false)}
-            >Close</button>
-          </div>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="settings-title"
+            className="settings-modal"
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 id="settings-title" style={{ margin: 0, fontSize: '18px' }}>Settings</h2>
+              <button
+                autoFocus
+                className="icon-button"
+                aria-label="Close settings"
+                onClick={() => setShowSettings(false)}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
 
-          <div className="setting-item">
-            <label htmlFor="settings-api-url">API URL</label>
-            <input id="settings-api-url" type="text" value={apiUrl} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
-            <small>Defined in Windows Registry</small>
-          </div>
+            <div className="setting-item">
+              <label htmlFor="settings-api-url">API URL</label>
+              <input id="settings-api-url" type="text" value={apiUrl} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
+              <small>Defined in Windows Registry</small>
+            </div>
 
-          <div className="setting-item">
-            <label htmlFor="settings-device-token">Device Token (Masked)</label>
-            <input id="settings-device-token" type="text" value={token ? `${token.substring(0, 8)}...` : "Not Loaded"} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
-            <small>Stored in Windows Credential Manager</small>
-          </div>
+            <div className="setting-item">
+              <label htmlFor="settings-device-token">Device Token (Masked)</label>
+              <input id="settings-device-token" type="text" value={token ? `${token.substring(0, 8)}...` : "Not Loaded"} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
+              <small>Stored in Windows Credential Manager</small>
+            </div>
 
-          <div className="setting-item">
-            <label>Status</label>
-            <div style={{ color: status === 'Connected' ? '#4caf50' : '#f44336' }}>{status}</div>
+            <div className="setting-item">
+              <label>Status</label>
+              <div style={{ color: status === 'Connected' ? '#4caf50' : '#f44336' }}>{status}</div>
+            </div>
           </div>
         </div>
       )}

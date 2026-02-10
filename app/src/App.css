@@ -222,17 +222,6 @@ body {
 }
 
 /* Accessibility & Button Styles */
-.settings-toggle {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
-}
-.settings-toggle:focus-visible {
-  outline: 2px solid #4ade80;
-  outline-offset: 2px;
-}
-
 .text-button {
   background: transparent;
   border: 1px solid #333;
@@ -257,3 +246,32 @@ body {
   outline-offset: 2px;
   background: rgba(255, 255, 255, 0.1);
 }
+
+/* Settings Modal Styles */
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.settings-modal {
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  border: 1px solid #333;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
