@@ -347,20 +347,31 @@ class PhoenixTrayApp:
             return False
         
         try:
-            # Capture screen
-            screenshot_bytes = self.capture_screen()
-            if not screenshot_bytes:
+            # Capture screen (returns PIL Image)
+            img = self.capture_screen()
+            if not img:
                 logger.warning("Screenshot capture returned empty")
                 return False
             
-            logger.debug(f"Captured screenshot: {len(screenshot_bytes)} bytes")
-            
-            # Check for significant change
-            img = Image.open(BytesIO(screenshot_bytes))
+            # Check for significant change on RAW image
+            # Optimization: Avoid resize/compression if no change
             if not self.activity_detector.has_significant_change(img):
                 logger.debug("No significant change detected, skipping upload")
                 return True
             
+            # Change detected: Prepare for upload
+            # Resize
+            max_width = settings_manager.get_setting('max_image_width', 1024)
+            img.thumbnail((max_width, max_width))
+
+            # Compress to JPEG
+            img_byte_arr = BytesIO()
+            jpeg_quality = settings_manager.get_setting('jpeg_quality', 70)
+            img.save(img_byte_arr, format='JPEG', quality=jpeg_quality)
+            screenshot_bytes = img_byte_arr.getvalue()
+
+            logger.debug(f"Captured screenshot: {len(screenshot_bytes)} bytes")
+
             # Upload screenshot
             logger.info("Uploading screenshot...")
             result = self.api_client.upload_screenshot(screenshot_bytes)
@@ -378,10 +389,9 @@ class PhoenixTrayApp:
         except Exception as e:
             logger.error(f"Screenshot processing failed: {e}")
             return False
-            return False
     
     def capture_screen(self):
-        """Capture the current screen (focused monitor) and return as JPEG bytes."""
+        """Capture the current screen (focused monitor) and return as PIL Image."""
         try:
             with mss.mss() as sct:
                 # Detect which monitor has the active window
@@ -391,17 +401,7 @@ class PhoenixTrayApp:
                 screenshot = sct.grab(monitor)
                 
                 img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
-                
-                # Resize for efficiency
-                max_width = settings_manager.get_setting('max_image_width', 1024)
-                img.thumbnail((max_width, max_width))
-                
-                # Convert to JPEG bytes
-                img_byte_arr = BytesIO()
-                jpeg_quality = settings_manager.get_setting('jpeg_quality', 70)
-                img.save(img_byte_arr, format='JPEG', quality=jpeg_quality)
-                
-                return img_byte_arr.getvalue()
+                return img
         except Exception as e:
             logger.error(f"Screenshot capture failed: {e}")
             return None
