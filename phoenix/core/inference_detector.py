@@ -10,6 +10,7 @@ import socket
 import subprocess
 import requests
 from typing import Optional, Dict, Any
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,19 @@ class InferenceDetector:
         Args:
             ollama_host: Base URL for Ollama API (default: http://localhost:11450)
         """
-        self.ollama_host = ollama_host.rstrip('/')
+        # Security: Validate Ollama host to prevent SSRF
+        # Ensure it points to localhost only
+        try:
+            parsed = urlparse(ollama_host)
+            if parsed.scheme not in ('http', 'https') or parsed.hostname not in ('localhost', '127.0.0.1'):
+                logger.warning(f"Security: Invalid Ollama host '{ollama_host}'. Resetting to default.")
+                self.ollama_host = "http://localhost:11450"
+            else:
+                self.ollama_host = ollama_host.rstrip('/')
+        except Exception as e:
+            logger.warning(f"Security: Failed to parse Ollama host '{ollama_host}': {e}. Resetting to default.")
+            self.ollama_host = "http://localhost:11450"
+
         self._ollama_cache = None
         self._ollama_cache_time = 0
         self._tailscale_cache = None
@@ -130,7 +143,10 @@ class InferenceDetector:
             if result.returncode == 0:
                 ip = result.stdout.strip()
                 if ip and ip.startswith('100.'):
-                    logger.debug(f"Tailscale IP from CLI: {ip}")
+                    # Mask IP in logs
+                    parts = ip.split('.')
+                    masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
+                    logger.debug(f"Tailscale IP from CLI: {masked}")
                     return ip
         except FileNotFoundError:
             logger.debug("Tailscale CLI not found in PATH")
@@ -149,7 +165,9 @@ class InferenceDetector:
                         ip = addr.address
                         # Tailscale uses the 100.x.y.z CGNAT range
                         if ip.startswith('100.'):
-                            logger.debug(f"Tailscale IP from interface {iface_name}: {ip}")
+                            parts = ip.split('.')
+                            masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
+                            logger.debug(f"Tailscale IP from interface {iface_name}: {masked}")
                             return ip
         except ImportError:
             logger.debug("psutil not available for network interface detection")
@@ -162,7 +180,9 @@ class InferenceDetector:
             hostname = socket.gethostname()
             for ip in socket.gethostbyname_ex(hostname)[2]:
                 if ip.startswith('100.'):
-                    logger.debug(f"Tailscale IP from hostname resolution: {ip}")
+                    parts = ip.split('.')
+                    masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
+                    logger.debug(f"Tailscale IP from hostname resolution: {masked}")
                     return ip
         except Exception as e:
             logger.debug(f"Hostname IP resolution error: {e}")
