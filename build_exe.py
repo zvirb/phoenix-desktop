@@ -99,6 +99,7 @@ def build_executable():
         '--collect-all=plyer',
         '--collect-all=pystray',
         f'--add-data={current_dir}/gui;gui',  # Include gui package
+        f'--add-data={current_dir}/phoenix;phoenix',  # Include phoenix package (for assets/ui)
     ]
 
     # Explicitly add package data to avoid "ModuleNotFoundError" or missing themes
@@ -216,28 +217,19 @@ def main():
     
     # Check if PyInstaller is installed
     if not check_pyinstaller():
-        print("PyInstaller is not installed.")
-        response = input("Install PyInstaller now? (y/n): ").strip().lower()
-        
-        if response == 'y':
-            if not install_pyinstaller():
-                sys.exit(1)
-        else:
-            print("Cannot build without PyInstaller. Exiting.")
+        print("PyInstaller is not installed. Installing...")
+        if not install_pyinstaller():
             sys.exit(1)
     else:
         print("✅ PyInstaller is installed")
     
-    print()
-    response = input("Proceed with build? (y/n): ").strip().lower()
-    
-    if response == 'y':
-        if build_executable():
-            create_installer_script()
-            print()
-            print("✅ All done!")
+    print("Starting build process...")
+    if build_executable():
+        create_installer_script()
+        print()
+        print("✅ All done!")
     else:
-        print("Build cancelled.")
+        print("❌ Build failed")
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ import os
 
 from windows_settings import settings_manager
 from settings_model import validate_settings
-from token_manager import TokenManager
+from phoenix.core.token_manager import TokenManager
 
 logger = logging.getLogger(__name__)
 

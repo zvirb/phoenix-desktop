@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('C:\\Users\\marku\\Documents\\phoenix-desktop/gui', 'gui'), ('C:\\Users\\marku\\Documents\\phoenix-desktop\\venv\\Lib\\site-packages/customtkinter', 'customtkinter'), ('C:\\Users\\marku\\Documents\\phoenix-desktop\\venv\\Lib\\site-packages/plyer', 'plyer'), ('C:\\Users\\marku\\Documents\\phoenix-desktop\\venv\\Lib\\site-packages/pystray', 'pystray')]
+datas = [('C:\\Users\\marku\\Documents\\phoenix-desktop/gui', 'gui'), ('C:\\Users\\marku\\Documents\\phoenix-desktop/phoenix', 'phoenix'), ('C:\\Users\\marku\\Documents\\phoenix-desktop\\venv\\Lib\\site-packages/customtkinter', 'customtkinter'), ('C:\\Users\\marku\\Documents\\phoenix-desktop\\venv\\Lib\\site-packages/plyer', 'plyer'), ('C:\\Users\\marku\\Documents\\phoenix-desktop\\venv\\Lib\\site-packages/pystray', 'pystray')]
 binaries = []
 hiddenimports = ['PIL._tkinter_finder', 'win32timezone', 'pystray._win32', 'plyer.platforms.win.notification', 'customtkinter', 'darkdetect']
 tmp_ret = collect_all('customtkinter')

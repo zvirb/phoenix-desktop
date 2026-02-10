@@ -55,3 +55,5 @@ screenshots/
 *.jpg
 *.jpeg
 *.png
+build_exe.py
+build_exe.py

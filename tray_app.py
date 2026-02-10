@@ -24,12 +24,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from windows_settings import settings_manager
 # gui_settings is now a redirect, but we launch it via subprocess
-from token_manager import TokenManager
-from api_client import create_client
-from window_detector import WindowDetector
-from activity_detector import ActivityDetector
-from gaming_detector import GamingDetector
-from inference_detector import InferenceDetector
+from phoenix.core.token_manager import TokenManager
+from phoenix.core.api_client import create_client
+from phoenix.core.window_detector import WindowDetector
+from phoenix.core.activity_detector import ActivityDetector
+from phoenix.core.gaming_detector import GamingDetector
+from phoenix.core.inference_detector import InferenceDetector
 import mss
 from io import BytesIO
 
@@ -98,7 +98,11 @@ class PhoenixTrayApp:
         """Show first-time setup wizard."""
         try:
             # Run the new Wizard using argument dispatch
-            subprocess.Popen([sys.executable, "--wizard"])
+            cmd = [sys.executable]
+            if not getattr(sys, 'frozen', False):
+                cmd.append(sys.argv[0])
+            cmd.append("--wizard")
+            subprocess.Popen(cmd)
         except Exception as e:
             logger.error(f"Failed to launch wizard: {e}")
 
@@ -147,7 +151,11 @@ class PhoenixTrayApp:
             try:
                 logger.info("Launching settings window in separate process...")
                 # Run settings using argument dispatch
-                subprocess.Popen([sys.executable, "--settings"])
+                cmd = [sys.executable]
+                if not getattr(sys, 'frozen', False):
+                    cmd.append(sys.argv[0])
+                cmd.append("--settings")
+                subprocess.Popen(cmd)
                 
             except Exception as e:
                 logger.error(f"Failed to run settings process: {e}")

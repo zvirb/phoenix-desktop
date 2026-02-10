@@ -1,6 +1,6 @@
 import customtkinter as ctk
-from token_manager import TokenManager
-from api_client import create_client
+from phoenix.core.token_manager import TokenManager
+from phoenix.core.api_client import create_client
 from windows_settings import settings_manager
 import logging
 import threading
