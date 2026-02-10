@@ -33,3 +33,8 @@
 **Vulnerability:** The `APIClient` was logging the full JSON response body at DEBUG level using `logger.debug()`. This exposed sensitive data (like `access_token` and `Set-Cookie` headers returned by the server) in plain text in the log files.
 **Learning:** Even when requests are sanitized, responses can contain new secrets (session tokens, cookies) that must also be redacted before logging. Standard `logging` does not automatically sanitize arguments.
 **Prevention:** Always wrap API response objects in a sanitization function before passing them to any logger, especially when the response might contain authentication material.
+
+## 2026-10-27 - SSRF in Local Service Connectors
+**Vulnerability:** The `InferenceDetector` accepted an arbitrary `ollama_host` URL via configuration, allowing potential SSRF or network scanning via a local desktop app if the configuration was manipulated (e.g. via registry).
+**Learning:** Even "local" service connectors (like for Ollama or local LLMs) must validate that they are indeed connecting to `localhost` to prevent becoming a proxy for internal network reconnaissance.
+**Prevention:** Strictly validate service URLs in constructors using `urllib.parse` to ensure `scheme` is http/https and `hostname` is exactly `localhost` or `127.0.0.1`.
