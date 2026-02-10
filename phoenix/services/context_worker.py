@@ -43,7 +43,8 @@ class ContextWorker(QThread):
                 # 1. Check Window State
                 app_name, window_title = self.window_detector.get_active_window()
                 is_idle = self.window_detector.is_idle(self.idle_threshold)
-                is_gaming = self.gaming_detector.is_gaming()
+                # Pass app_name to optimize gaming check (skips full process scan)
+                is_gaming = self.gaming_detector.is_gaming(app_name)
 
                 # Emit Status Change if needed
                 if is_idle != self.is_idle_state or is_gaming != self.is_gaming_state:
@@ -79,12 +80,12 @@ class ContextWorker(QThread):
                 sct_img = sct.grab(monitor)
                 img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
                 
-                # Resize (Standardize)
-                max_width = 1024
-                img.thumbnail((max_width, max_width))
-                
                 # Check for significant change (MSE)
+                # Optimization: Check on full image first to avoid expensive thumbnail resize if no change
                 if self.activity_detector.has_significant_change(img):
+                    # Resize (Standardize)
+                    max_width = 1024
+                    img.thumbnail((max_width, max_width))
                     # Convert to JPEG
                     buffer = BytesIO()
                     img.save(buffer, format="JPEG", quality=70)

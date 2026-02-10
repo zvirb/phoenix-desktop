@@ -13,3 +13,28 @@
 **Vulnerability:** Raw user input containing potential PII or secrets was being logged to disk in the sidecar's `decompose_task` and input listener.
 **Learning:** Background processes/sidecars often have separate logging configurations that miss centralized security policies.
 **Prevention:** Ensure all entry points (like stdin listeners) validate and sanitize input immediately upon receipt before logging.
+
+## 2026-02-06 - PII Leakage in Debug Logs
+**Vulnerability:** The `api_client.send_heartbeat` method was logging the full `data` payload (including `window_title`) at DEBUG level. While typical configurations use INFO, centralized logging setups (like `PhoenixLogger`) often default to DEBUG for file outputs, risking persistent PII storage.
+**Learning:** Debug logs are not safe zones; libraries must assume their debug output might be persisted in production environments.
+**Prevention:** Always create a sanitized copy of data structures containing PII before passing them to any logging function, even `debug()`.
+
+## 2026-06-02 - Plaintext Token Entry
+**Vulnerability:** The device token was requested using `input()` in `update_token.py` and `phoenix/core/token_manager.py`, exposing the token in plaintext on the console during setup.
+**Learning:** Standard input functions like `input()` are not secure for sensitive data entry as they echo characters to the screen and may be captured in shell history.
+**Prevention:** Always use `getpass.getpass()` for sensitive inputs like passwords and tokens to mask the input.
+
+## 2026-02-08 - Nested Dictionary and Return Value Leakage in Logs
+**Vulnerability:** The `@logged_method` decorator and `PhoenixLogger` were logging function arguments (kwargs) and return values using `str()`, which exposed sensitive data nested within dictionaries (e.g., `{'user': {'token': '...'}}`). Simple keyword filtering on the top-level keys missed these nested secrets.
+**Learning:** Shallow filtering of sensitive keys is insufficient for complex data structures; logging logic must be recursive to catch secrets buried deep in objects.
+**Prevention:** Implement a recursive sanitization function with depth limits and cycle detection to redact sensitive keys at any level before logging.
+
+## 2026-10-27 - Unsanitized API Response Logging
+**Vulnerability:** The `APIClient` was logging the full JSON response body at DEBUG level using `logger.debug()`. This exposed sensitive data (like `access_token` and `Set-Cookie` headers returned by the server) in plain text in the log files.
+**Learning:** Even when requests are sanitized, responses can contain new secrets (session tokens, cookies) that must also be redacted before logging. Standard `logging` does not automatically sanitize arguments.
+**Prevention:** Always wrap API response objects in a sanitization function before passing them to any logger, especially when the response might contain authentication material.
+
+## 2026-10-27 - SSRF in Local Service Connectors
+**Vulnerability:** The `InferenceDetector` accepted an arbitrary `ollama_host` URL via configuration, allowing potential SSRF or network scanning via a local desktop app if the configuration was manipulated (e.g. via registry).
+**Learning:** Even "local" service connectors (like for Ollama or local LLMs) must validate that they are indeed connecting to `localhost` to prevent becoming a proxy for internal network reconnaissance.
+**Prevention:** Strictly validate service URLs in constructors using `urllib.parse` to ensure `scheme` is http/https and `hostname` is exactly `localhost` or `127.0.0.1`.

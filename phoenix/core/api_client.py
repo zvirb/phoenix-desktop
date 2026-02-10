@@ -7,6 +7,12 @@ import time
 import requests
 from typing import Optional, Dict, Any, Tuple
 from urllib.parse import urljoin
+try:
+    from phoenix_logging import sanitize_data
+except ImportError:
+    # Fallback if phoenix_logging is not in path
+    def sanitize_data(data, depth=0): return data
+
 from .request_queue import RequestQueue
 
 logger = logging.getLogger(__name__)
@@ -71,7 +77,11 @@ class APIClient:
             # 4. Success -> process queue and return JSON
             self.process_queue()
             result = response.json()
-            logger.debug(f"API Response from {endpoint}: {result}")
+
+            # Sanitize sensitive data before logging
+            safe_result = sanitize_data(result)
+            logger.debug(f"API Response from {endpoint}: {safe_result}")
+
             return result
             
         except requests.exceptions.HTTPError as e:
@@ -221,7 +231,13 @@ class APIClient:
         if tailscale_ip is not None:
             data['tailscale_ip'] = tailscale_ip
         
-        logger.debug(f"Heartbeat data: {data}")
+        # Mask sensitive data in logs
+        safe_data = data.copy()
+        title = safe_data.get('window_title') or ''
+        if len(title) > 10:
+            safe_data['window_title'] = f"{title[:10]}..."
+
+        logger.debug(f"Heartbeat data: {safe_data}")
         return self._make_request('POST', '/api/v1/screentime/heartbeat', json=data)
 
     def upload_screenshot(self, image_bytes: bytes) -> Dict[str, Any]:

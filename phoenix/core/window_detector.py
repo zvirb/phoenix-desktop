@@ -12,10 +12,24 @@ try:
     import win32gui
     import win32process
     import psutil
+    import ctypes
+
+    # Pre-define ctypes structures and libraries for performance
+    class LASTINPUTINFO(ctypes.Structure):
+        _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
+
+    # Optimizing tight loop access to DLLs
+    _user32 = ctypes.windll.user32
+    _kernel32 = ctypes.windll.kernel32
+
     WINDOWS_AVAILABLE = True
-except ImportError:
+except (ImportError, AttributeError):
+    # AttributeError can happen if ctypes.windll is not available (Linux)
     WINDOWS_AVAILABLE = False
 
+
+# Shared PID cache to avoid redundant process lookups across instances
+_pid_cache = {}
 
 class WindowDetector:
     """Detect active window and application."""
@@ -24,7 +38,13 @@ class WindowDetector:
         """Initialize window detector."""
         self._last_hwnd = None
         self._last_app_name = None
-        if not WINDOWS_AVAILABLE:
+
+        # Pre-allocate LASTINPUTINFO structure for get_idle_time
+        if WINDOWS_AVAILABLE:
+            self._lastInputInfo = LASTINPUTINFO()
+            self._lastInputInfo.cbSize = ctypes.sizeof(LASTINPUTINFO)
+        else:
+            self._lastInputInfo = None
             logger.warning("Windows API not available. Window detection will be limited.")
     
     def get_active_window(self) -> Tuple[str, str]:
@@ -55,12 +75,23 @@ class WindowDetector:
             # Get process ID
             _, pid = win32process.GetWindowThreadProcessId(hwnd)
             
-            # Get process name
-            try:
-                process = psutil.Process(pid)
-                app_name = process.name()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                app_name = "Unknown"
+            # Check PID cache first (shared module-level cache)
+            if pid in _pid_cache:
+                app_name = _pid_cache[pid]
+            else:
+                # Get process name
+                try:
+                    process = psutil.Process(pid)
+                    app_name = process.name()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    app_name = "Unknown"
+
+                # Update PID cache
+                _pid_cache[pid] = app_name
+
+                # Prevent cache from growing too large
+                if len(_pid_cache) > 100:
+                    _pid_cache.clear()
             
             # Update cache
             self._last_hwnd = hwnd
@@ -100,20 +131,13 @@ class WindowDetector:
 
     def get_idle_time(self) -> float:
         """Get number of seconds since last user input."""
-        if not WINDOWS_AVAILABLE:
+        if not WINDOWS_AVAILABLE or self._lastInputInfo is None:
             return 0.0
             
         try:
-            import ctypes
-            
-            class LASTINPUTINFO(ctypes.Structure):
-                _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
-                
-            lastInputInfo = LASTINPUTINFO()
-            lastInputInfo.cbSize = ctypes.sizeof(LASTINPUTINFO)
-            
-            if ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lastInputInfo)):
-                millis = ctypes.windll.kernel32.GetTickCount() - lastInputInfo.dwTime
+            # Reuse pre-allocated structure
+            if _user32.GetLastInputInfo(ctypes.byref(self._lastInputInfo)):
+                millis = _kernel32.GetTickCount() - self._lastInputInfo.dwTime
                 return millis / 1000.0
             return 0.0
         except Exception:

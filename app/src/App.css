@@ -68,6 +68,37 @@ body {
   cursor: not-allowed;
 }
 
+.icon-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon-button svg {
+  width: 24px;
+  height: 24px;
+}
+
 .spinner {
   width: 20px;
   height: 20px;
@@ -190,3 +221,57 @@ body {
     100% { opacity: 1; }
 }
 
+/* Accessibility & Button Styles */
+.text-button {
+  background: transparent;
+  border: 1px solid #333;
+  color: #ccc;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.text-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: #555;
+}
+.text-button:focus-visible {
+  outline: 2px solid #4ade80;
+  outline-offset: 2px;
+}
+
+.icon-button:focus-visible {
+  outline: 2px solid #4ade80;
+  outline-offset: 2px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Settings Modal Styles */
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.settings-modal {
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  border: 1px solid #333;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

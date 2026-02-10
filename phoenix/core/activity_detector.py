@@ -87,7 +87,13 @@ class ActivityDetector:
                 return 0.0
             
             # Mean Squared Error
-            err = np.sum((img1.astype("float") - img2.astype("float")) ** 2)
+            # Optimization: Use float32 arithmetic to avoid expensive copies to float64
+            # copy=False ensures we don't copy if already float32 (which they usually are)
+            img1_f = img1.astype(np.float32, copy=False)
+            img2_f = img2.astype(np.float32, copy=False)
+
+            diff = img1_f - img2_f
+            err = np.sum(diff * diff)
             err /= float(img1.shape[0] * img1.shape[1])
             
             # Max possible error for 8-bit images is 255^2
