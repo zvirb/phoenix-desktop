@@ -271,5 +271,52 @@ class TestGlobalConfigInstance:
         assert config is not None
 
 
+class TestConfigSecurity:
+    """Test security-related configuration logic."""
+
+    @patch('config.settings_manager')
+    def test_verify_ssl_enforced_for_remote(self, mock_settings):
+        """
+        Test that VERIFY_SSL is enforced (True) for remote URLs,
+        even if the registry setting says False.
+        """
+        # Scenario: User/Attacker disables SSL verification in registry
+        mock_settings.get_verify_ssl.return_value = False
+
+        # Scenario: Connecting to a remote server
+        mock_settings.get_phoenix_url.return_value = "https://remote-server.com"
+
+        from config import Config
+        config = Config()
+
+        assert config.VERIFY_SSL is True, "VERIFY_SSL should be True for remote URLs regardless of registry setting"
+
+    @patch('config.settings_manager')
+    def test_verify_ssl_allows_false_for_localhost(self, mock_settings):
+        """
+        Test that VERIFY_SSL can be False for localhost (development).
+        """
+        mock_settings.get_verify_ssl.return_value = False
+        mock_settings.get_phoenix_url.return_value = "https://localhost:8000"
+
+        from config import Config
+        config = Config()
+
+        assert config.VERIFY_SSL is False
+
+    @patch('config.settings_manager')
+    def test_verify_ssl_allows_false_for_127_0_0_1(self, mock_settings):
+        """
+        Test that VERIFY_SSL can be False for 127.0.0.1 (development).
+        """
+        mock_settings.get_verify_ssl.return_value = False
+        mock_settings.get_phoenix_url.return_value = "https://127.0.0.1:8000"
+
+        from config import Config
+        config = Config()
+
+        assert config.VERIFY_SSL is False
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -23,6 +23,7 @@ except ImportError:
 sys.path.insert(0, str(Path(__file__).parent))
 
 from windows_settings import settings_manager
+from config import config
 # gui_settings is now a redirect, but we launch it via subprocess
 from phoenix.core.token_manager import TokenManager
 from phoenix.core.api_client import create_client
@@ -212,7 +213,7 @@ class PhoenixTrayApp:
             self.api_client = create_client(
                 base_url=settings_manager.get_phoenix_url(),
                 device_id=settings_manager.get_device_id(),
-                verify_ssl=settings_manager.get_verify_ssl()
+                verify_ssl=config.VERIFY_SSL
             )
             
             if not self.api_client:
