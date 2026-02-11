@@ -38,3 +38,8 @@
 **Vulnerability:** The `InferenceDetector` accepted an arbitrary `ollama_host` URL via configuration, allowing potential SSRF or network scanning via a local desktop app if the configuration was manipulated (e.g. via registry).
 **Learning:** Even "local" service connectors (like for Ollama or local LLMs) must validate that they are indeed connecting to `localhost` to prevent becoming a proxy for internal network reconnaissance.
 **Prevention:** Strictly validate service URLs in constructors using `urllib.parse` to ensure `scheme` is http/https and `hostname` is exactly `localhost` or `127.0.0.1`.
+
+## 2026-10-28 - Configuration-Based SSL Verification Bypass
+**Vulnerability:** The application respected the `verify_ssl=False` setting from the Windows Registry even for remote production URLs, allowing a local attacker or malware to disable SSL validation globally via a simple registry change.
+**Learning:** Security-critical settings (like SSL verification) should not be blindly trusted from external configuration sources (like Registry or ENV) when connecting to public/production endpoints.
+**Prevention:** Hardcode security enforcements for production environments in code (e.g., force `verify=True` for non-localhost URLs), treating configuration as a "downgrade request" that is only honored in safe contexts (like localhost development).

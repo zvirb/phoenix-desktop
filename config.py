@@ -74,7 +74,27 @@ class Config:
     
     @property
     def VERIFY_SSL(self) -> bool:
-        """Get SSL verification preference."""
+        """
+        Get SSL verification preference.
+
+        Security: Always return True (enforce SSL verification) if the API URL
+        is remote (not localhost/127.0.0.1), ignoring the registry setting.
+        """
+        url = self.PHOENIX_API_URL
+        if not url:
+            return True
+
+        try:
+            parsed = urlparse(url)
+            is_localhost = parsed.hostname in ('localhost', '127.0.0.1')
+
+            if not is_localhost:
+                # Enforce SSL verification for remote servers
+                return True
+        except Exception:
+            # If URL parsing fails, fail secure
+            return True
+
         return settings_manager.get_verify_ssl()
     
     @property

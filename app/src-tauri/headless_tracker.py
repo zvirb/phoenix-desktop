@@ -15,6 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from windows_settings import settings_manager
+from config import config
 from token_manager import TokenManager
 from api_client import create_client
 from window_detector import WindowDetector
@@ -129,7 +130,7 @@ class HeadlessTracker:
             self.api_client = create_client(
                  base_url=base_url,
                  device_id=settings_manager.get_device_id(),
-                 verify_ssl=settings_manager.get_verify_ssl()
+                 verify_ssl=config.VERIFY_SSL
             )
             # Authenticate - API Client stores access_token internally
             auth = self.api_client.authenticate(token)
@@ -217,7 +218,7 @@ class HeadlessTracker:
              payload = {"task_title": text, "user_id": "current_user"}
              
              res = requests.post(url, json=payload, headers=headers, timeout=10,
-                                 verify=settings_manager.get_verify_ssl())
+                                 verify=config.VERIFY_SSL)
                                  
              if res.status_code in [200, 201]:
                  data = res.json()
