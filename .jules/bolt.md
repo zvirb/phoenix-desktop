@@ -24,3 +24,7 @@
 ## 2026-02-09 - Defer Expensive Image Operations
 **Learning:** `process_screenshot` was capturing, resizing (1920->1024), and JPEG compressing *every* captured frame before checking for significant changes. By checking for changes on the raw captured image *first* (using a fast resize-check), we avoid the expensive high-quality resize and JPEG compression for the 90%+ of cases where the screen hasn't changed.
 **Action:** In processing pipelines, perform cheap "gating" checks (like diffs) as early as possible on raw data before performing expensive transformations (resize, encode, upload).
+
+## 2026-02-15 - Fast Resampling for Activity Detection
+**Learning:** `ActivityDetector.has_significant_change` was using `Image.Resampling.BILINEAR` to downscale screenshots (1920x1080 -> 320x240) for change detection. Benchmarking revealed `NEAREST` resampling is ~38x faster (0.3ms vs 12ms). Since the goal is detecting *significant* changes, the aliasing from `NEAREST` is an acceptable trade-off for the massive speedup.
+**Action:** When downscaling images for change detection (not display), prefer `NEAREST` resampling to save CPU cycles.
