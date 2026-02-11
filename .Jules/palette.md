@@ -19,3 +19,7 @@
 ## 2026-03-01 - Native Focus Styles on Custom Elements
 **Learning:** Custom buttons (like icon-only toggles) often lose default focus rings when styled with `background: transparent; border: none`. This makes keyboard navigation impossible. Manually adding `:focus-visible` styles is crucial for accessibility in custom UI components.
 **Action:** When creating custom interactive elements (icon buttons, toggles), always explicitly define `:focus-visible` styles to ensure keyboard users can see where they are.
+
+## 2026-06-15 - Micro-Interactions for Config Fields
+**Learning:** For read-only configuration fields (like API keys or URLs), users expect quick copy functionality without manual selection. Providing immediate visual feedback (icon change/check) directly on the button is more effective than a separate toast for these small interactions.
+**Action:** Always implement click-to-copy buttons with temporary success state (check icon) for read-only text fields that users might need to transfer elsewhere.

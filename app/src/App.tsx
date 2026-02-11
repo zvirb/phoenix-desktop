@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
@@ -15,7 +15,21 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(false);
   const [taskInput, setTaskInput] = useState("");
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const copyTimeoutRef = useRef<number | null>(null);
 
+  const handleCopy = (text: string, fieldId: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+      setCopiedField(fieldId);
+      copyTimeoutRef.current = window.setTimeout(() => {
+        setCopiedField(null);
+        copyTimeoutRef.current = null;
+      }, 2000);
+    });
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -243,13 +257,54 @@ function App() {
 
             <div className="setting-item">
               <label htmlFor="settings-api-url">API URL</label>
-              <input id="settings-api-url" type="text" value={apiUrl} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input id="settings-api-url" type="text" value={apiUrl} readOnly style={{ flex: 1, padding: 8, background: '#333', border: 'none', color: '#fff', borderRadius: '4px' }} />
+                <button
+                  className="icon-button"
+                  aria-label="Copy API URL"
+                  title="Copy API URL"
+                  onClick={() => handleCopy(apiUrl, 'api-url')}
+                  style={{ color: copiedField === 'api-url' ? '#4ade80' : 'inherit' }}
+                >
+                  {copiedField === 'api-url' ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  )}
+                </button>
+              </div>
               <small>Defined in Windows Registry</small>
             </div>
 
             <div className="setting-item">
               <label htmlFor="settings-device-token">Device Token (Masked)</label>
-              <input id="settings-device-token" type="text" value={token ? `${token.substring(0, 8)}...` : "Not Loaded"} readOnly style={{ width: '100%', padding: 8, background: '#333', border: 'none', color: '#fff' }} />
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input id="settings-device-token" type="text" value={token ? `${token.substring(0, 8)}...` : "Not Loaded"} readOnly style={{ flex: 1, padding: 8, background: '#333', border: 'none', color: '#fff', borderRadius: '4px' }} />
+                <button
+                  className="icon-button"
+                  aria-label="Copy Device Token"
+                  title="Copy Device Token"
+                  disabled={!token}
+                  onClick={() => token && handleCopy(token, 'token')}
+                  style={{ color: copiedField === 'token' ? '#4ade80' : 'inherit' }}
+                >
+                  {copiedField === 'token' ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  )}
+                </button>
+              </div>
               <small>Stored in Windows Credential Manager</small>
             </div>
 
