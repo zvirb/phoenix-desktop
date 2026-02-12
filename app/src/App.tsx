@@ -261,8 +261,8 @@ function App() {
                 <input id="settings-api-url" type="text" value={apiUrl} readOnly style={{ flex: 1, padding: 8, background: '#333', border: 'none', color: '#fff', borderRadius: '4px' }} />
                 <button
                   className="icon-button"
-                  aria-label="Copy API URL"
-                  title="Copy API URL"
+                  aria-label={copiedField === 'api-url' ? "Copied API URL" : "Copy API URL"}
+                  title={copiedField === 'api-url' ? "Copied API URL" : "Copy API URL"}
                   onClick={() => handleCopy(apiUrl, 'api-url')}
                   style={{ color: copiedField === 'api-url' ? '#4ade80' : 'inherit' }}
                 >
@@ -287,8 +287,8 @@ function App() {
                 <input id="settings-device-token" type="text" value={token ? `${token.substring(0, 8)}...` : "Not Loaded"} readOnly style={{ flex: 1, padding: 8, background: '#333', border: 'none', color: '#fff', borderRadius: '4px' }} />
                 <button
                   className="icon-button"
-                  aria-label="Copy Device Token"
-                  title="Copy Device Token"
+                  aria-label={copiedField === 'token' ? "Copied Device Token" : "Copy Device Token"}
+                  title={copiedField === 'token' ? "Copied Device Token" : "Copy Device Token"}
                   disabled={!token}
                   onClick={() => token && handleCopy(token, 'token')}
                   style={{ color: copiedField === 'token' ? '#4ade80' : 'inherit' }}

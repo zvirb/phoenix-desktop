@@ -23,3 +23,7 @@
 ## 2026-06-15 - Micro-Interactions for Config Fields
 **Learning:** For read-only configuration fields (like API keys or URLs), users expect quick copy functionality without manual selection. Providing immediate visual feedback (icon change/check) directly on the button is more effective than a separate toast for these small interactions.
 **Action:** Always implement click-to-copy buttons with temporary success state (check icon) for read-only text fields that users might need to transfer elsewhere.
+
+## 2026-10-27 - Dynamic Accessibility for State Changes
+**Learning:** Visual feedback (like an icon changing to a checkmark) is insufficient for screen reader users. Updating `aria-label` and `title` attributes dynamically to reflect the successful state (e.g., "Copied!") provides essential confirmation for non-visual users.
+**Action:** When implementing interactive state toggles (like copy-to-clipboard), always ensure the accessible name updates to reflect the new state, not just the visual icon.
