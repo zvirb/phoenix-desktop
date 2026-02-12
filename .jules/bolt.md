@@ -28,3 +28,7 @@
 ## 2026-02-15 - Fast Resampling for Activity Detection
 **Learning:** `ActivityDetector.has_significant_change` was using `Image.Resampling.BILINEAR` to downscale screenshots (1920x1080 -> 320x240) for change detection. Benchmarking revealed `NEAREST` resampling is ~38x faster (0.3ms vs 12ms). Since the goal is detecting *significant* changes, the aliasing from `NEAREST` is an acceptable trade-off for the massive speedup.
 **Action:** When downscaling images for change detection (not display), prefer `NEAREST` resampling to save CPU cycles.
+
+## 2026-02-16 - Direct Image Conversion for Activity Detection
+**Learning:** `ImageOps.grayscale` adds overhead by checking image modes and handling pallets. For RGB images, `image.convert('L')` is ~40% faster (measured 0.030s vs 0.050s per 100 iters) as it directly invokes the C-optimized conversion path.
+**Action:** Use `.convert()` methods directly when source and target modes are known, avoiding wrapper overhead in tight loops.
