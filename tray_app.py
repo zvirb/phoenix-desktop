@@ -19,20 +19,28 @@ try:
 except ImportError:
     notification = None
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add parent directory to path (absolute path)
+current_dir = Path(__file__).resolve().parent
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
 
-from windows_settings import settings_manager
-from config import config
-# gui_settings is now a redirect, but we launch it via subprocess
-from phoenix.core.token_manager import TokenManager
-from phoenix.core.api_client import create_client
-from phoenix.core.window_detector import WindowDetector
-from phoenix.core.activity_detector import ActivityDetector
-from phoenix.core.gaming_detector import GamingDetector
-from phoenix.core.inference_detector import InferenceDetector
-import mss
-from io import BytesIO
+try:
+    from windows_settings import settings_manager
+    from config import config
+    # gui_settings is now a redirect, but we launch it via subprocess
+    from phoenix.core.token_manager import TokenManager
+    from phoenix.core.api_client import create_client
+    from phoenix.core.window_detector import WindowDetector
+    from phoenix.core.activity_detector import ActivityDetector
+    from phoenix.core.gaming_detector import GamingDetector
+    from phoenix.core.inference_detector import InferenceDetector
+    import mss
+    from io import BytesIO
+except ImportError as e:
+    # Fallback: check if we are in a different context or specific module missing
+    logging.error(f"Import failed: {e}")
+    logging.error(f"sys.path: {sys.path}")
+    raise
 
 # Setup logging
 # Setup logging paths
