@@ -54,7 +54,7 @@ class RequestQueue:
             logger.error(f"Failed to initialize queue DB: {e}")
 
     def add(self, endpoint: str, method: str, data: Optional[Dict] = None, 
-            headers: Optional[Dict] = None, priority: int = 1) -> bool:
+            priority: int = 1) -> bool:
         """Add a request to the queue."""
         try:
             conn = self._get_conn()
@@ -62,12 +62,13 @@ class RequestQueue:
             
             # Serialize
             json_data = json.dumps(data) if data else None
-            json_headers = json.dumps(headers) if headers else None
 
+            # Note: headers are explicitly NOT stored to prevent leaking tokens/secrets.
+            # APIClient relies on current session headers (with fresh token) during retry.
             cursor.execute("""
                 INSERT INTO request_queue (endpoint, method, data, headers, priority)
                 VALUES (?, ?, ?, ?, ?)
-            """, (endpoint, method, json_data, json_headers, priority))
+            """, (endpoint, method, json_data, None, priority))
             
             conn.commit()
             logger.info(f"Queued request to {endpoint} (Priority: {priority})")
