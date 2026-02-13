@@ -27,3 +27,7 @@
 ## 2026-10-27 - Dynamic Accessibility for State Changes
 **Learning:** Visual feedback (like an icon changing to a checkmark) is insufficient for screen reader users. Updating `aria-label` and `title` attributes dynamically to reflect the successful state (e.g., "Copied!") provides essential confirmation for non-visual users.
 **Action:** When implementing interactive state toggles (like copy-to-clipboard), always ensure the accessible name updates to reflect the new state, not just the visual icon.
+
+## 2026-11-28 - Backend Status Normalization
+**Learning:** Backend status codes (e.g., 'active', 'idle') often leak into the UI as raw strings. Previous logic only checked for 'Connected', causing other valid states to appear as errors.
+**Action:** Always create a normalization layer (helper function) mapping raw status strings to UI-friendly labels and semantic colors.
