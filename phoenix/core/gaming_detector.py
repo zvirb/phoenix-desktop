@@ -20,9 +20,9 @@ class GamingDetector:
         Args:
             gaming_processes: List of process names to detect (case-insensitive)
         """
-        self.gaming_processes = gaming_processes or config.GAMING_PROCESSES
-        # Ensure all process names are lowercase for comparison
-        self.gaming_processes = [p.lower() for p in self.gaming_processes]
+        processes = gaming_processes or config.GAMING_PROCESSES
+        # Ensure all process names are lowercase for comparison and use set for O(1) lookup
+        self.gaming_processes = {p.lower() for p in processes}
     
     def is_gaming(self, active_process_name: str = None) -> bool:
         """
@@ -118,7 +118,7 @@ class GamingDetector:
         """
         process_name = process_name.lower()
         if process_name not in self.gaming_processes:
-            self.gaming_processes.append(process_name)
+            self.gaming_processes.add(process_name)
             logger.info(f"Added {process_name} to gaming blacklist")
     
     def remove_process(self, process_name: str) -> None:
@@ -130,7 +130,7 @@ class GamingDetector:
         """
         process_name = process_name.lower()
         if process_name in self.gaming_processes:
-            self.gaming_processes.remove(process_name)
+            self.gaming_processes.discard(process_name)
             logger.info(f"Removed {process_name} from gaming blacklist")
 
 
