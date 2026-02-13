@@ -4,6 +4,7 @@ Secure API client for Phoenix backend with IAM authentication and offline queuin
 import logging
 import random
 import time
+import json
 import requests
 from typing import Optional, Dict, Any, Tuple
 from urllib.parse import urljoin
@@ -85,7 +86,26 @@ class APIClient:
             return result
             
         except requests.exceptions.HTTPError as e:
-            logger.error(f"HTTP Error for {endpoint}: {e.response.status_code} - {e.response.text}")
+            # Sanitize error body to prevent leaking sensitive info
+            try:
+                error_body = e.response.text
+                if error_body:
+                    try:
+                        error_json = json.loads(error_body)
+                        sanitized_error = sanitize_data(error_json)
+                        error_msg = json.dumps(sanitized_error)
+                    except (json.JSONDecodeError, TypeError):
+                        # Not JSON, truncate to avoid massive logs
+                        if len(error_body) > 500:
+                            error_msg = error_body[:500] + "..."
+                        else:
+                            error_msg = error_body
+                else:
+                    error_msg = ""
+            except Exception:
+                error_msg = "<Failed to process error body>"
+
+            logger.error(f"HTTP Error for {endpoint}: {e.response.status_code} - {error_msg}")
             return {'status': 'failed', 'error': str(e), 'code': e.response.status_code}
             
         except requests.exceptions.RequestException as e:
@@ -116,7 +136,6 @@ class APIClient:
         
         for req in pending:
             try:
-                import json
                 data = json.loads(req['data']) if req['data'] else None
                 url = urljoin(self.base_url, req['endpoint'])
                 
