@@ -17,6 +17,28 @@ function App() {
   const [taskInput, setTaskInput] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const copyTimeoutRef = useRef<number | null>(null);
+  const settingsBtnRef = useRef<HTMLButtonElement>(null);
+
+  const getStatusColor = (s: string) => {
+    switch (s.toLowerCase()) {
+      case 'connected':
+      case 'active':
+        return '#4ade80';
+      case 'idle':
+        return '#facc15';
+      case 'error':
+      case 'disconnected':
+        return '#ef4444';
+      default:
+        return '#888';
+    }
+  };
+
+  const closeSettings = () => {
+    setShowSettings(false);
+    // Restore focus to the trigger button
+    setTimeout(() => settingsBtnRef.current?.focus(), 0);
+  };
 
   const handleCopy = (text: string, fieldId: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -34,7 +56,11 @@ function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && showSettings) {
-        setShowSettings(false);
+        closeSettings();
+      }
+      if (e.key === '?' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName) && !showSettings) {
+        e.preventDefault();
+        setShowSettings(true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -216,9 +242,10 @@ function App() {
       {/* Settings Panel */}
       <div style={{ position: 'fixed', bottom: 10, right: 10 }}>
         <button
+          ref={settingsBtnRef}
           className="icon-button"
-          aria-label="Open settings"
-          title="Open settings"
+          aria-label="Open settings (Shift+/)"
+          title="Open settings (Shift+/)"
           onClick={() => setShowSettings(!showSettings)}
           style={{ background: '#252526', border: '1px solid #333' }}
         >
@@ -232,7 +259,7 @@ function App() {
       {showSettings && (
         <div
           className="settings-backdrop"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowSettings(false); }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeSettings(); }}
         >
           <div
             role="dialog"
@@ -246,7 +273,7 @@ function App() {
                 autoFocus
                 className="icon-button"
                 aria-label="Close settings"
-                onClick={() => setShowSettings(false)}
+                onClick={closeSettings}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -310,7 +337,16 @@ function App() {
 
             <div className="setting-item">
               <label>Status</label>
-              <div style={{ color: status === 'Connected' ? '#4caf50' : '#f44336' }}>{status}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: getStatusColor(status),
+                  boxShadow: `0 0 8px ${getStatusColor(status)}`
+                }}></div>
+                <span style={{ color: getStatusColor(status) }}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
