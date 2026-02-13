@@ -32,3 +32,7 @@
 ## 2026-02-16 - Direct Image Conversion for Activity Detection
 **Learning:** `ImageOps.grayscale` adds overhead by checking image modes and handling pallets. For RGB images, `image.convert('L')` is ~40% faster (measured 0.030s vs 0.050s per 100 iters) as it directly invokes the C-optimized conversion path.
 **Action:** Use `.convert()` methods directly when source and target modes are known, avoiding wrapper overhead in tight loops.
+
+## 2026-03-03 - Gaming Process Blacklist O(1) Lookup
+**Learning:** `GamingDetector` was using a `List` for checking if a process is a game, which is O(N) where N is the number of blacklisted games. Inside the "slow path" (iterating all system processes), this check runs for every process (P), making it O(P*N). By converting the blacklist to a `Set`, the check becomes O(1), making the loop O(P). Benchmarking showed a ~60x speedup for 1000 gaming processes.
+**Action:** Always use `set` for membership testing when iterating over collections, especially inside loops.
