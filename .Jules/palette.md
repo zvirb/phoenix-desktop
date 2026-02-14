@@ -31,3 +31,7 @@
 ## 2026-11-28 - Backend Status Normalization
 **Learning:** Backend status codes (e.g., 'active', 'idle') often leak into the UI as raw strings. Previous logic only checked for 'Connected', causing other valid states to appear as errors.
 **Action:** Always create a normalization layer (helper function) mapping raw status strings to UI-friendly labels and semantic colors.
+
+## 2026-05-15 - Maintaining Focus During Loading States
+**Learning:** While disabling inputs during async operations prevents duplicate submissions, it often causes the browser to move focus to the `body`, forcing users to re-click the input when the operation finishes. Using `readOnly` instead of `disabled` preserves focus while still preventing edits.
+**Action:** Use `readOnly` combined with visual styling (e.g., `cursor: progress`, reduced opacity) for text inputs during short loading states to keep the user's workflow seamless.

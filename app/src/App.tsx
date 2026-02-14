@@ -139,6 +139,7 @@ function App() {
   };
 
   const handleSubmit = () => {
+    if (loading) return;
     if (taskInput.trim()) {
       handleDecompose(taskInput);
       setTaskInput("");
@@ -155,7 +156,7 @@ function App() {
             aria-label="Task description"
             value={taskInput}
             onChange={(e) => setTaskInput(e.target.value)}
-            disabled={loading}
+            readOnly={loading}
             placeholder={loading ? "Thinking..." : "What are you working on?"}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -245,6 +246,8 @@ function App() {
           ref={settingsBtnRef}
           className="icon-button"
           aria-label="Open settings (Shift+/)"
+          aria-haspopup="dialog"
+          aria-expanded={showSettings}
           title="Open settings (Shift+/)"
           onClick={() => setShowSettings(!showSettings)}
           style={{ background: '#252526', border: '1px solid #333' }}
