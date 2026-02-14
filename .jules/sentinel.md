@@ -43,3 +43,8 @@
 **Vulnerability:** The application respected the `verify_ssl=False` setting from the Windows Registry even for remote production URLs, allowing a local attacker or malware to disable SSL validation globally via a simple registry change.
 **Learning:** Security-critical settings (like SSL verification) should not be blindly trusted from external configuration sources (like Registry or ENV) when connecting to public/production endpoints.
 **Prevention:** Hardcode security enforcements for production environments in code (e.g., force `verify=True` for non-localhost URLs), treating configuration as a "downgrade request" that is only honored in safe contexts (like localhost development).
+
+## 2026-10-30 - Path Interception via Subprocess
+**Vulnerability:** The application executed `tailscale` using `subprocess.run(['tailscale', ...])` without an absolute path. On Windows, this behavior implicitly searches the current working directory first, allowing a malicious `tailscale.exe` placed alongside the application to hijack execution.
+**Learning:** `subprocess.run` (and `Popen`) with a command name alone is unsafe on Windows due to legacy search order rules that prioritize the CWD.
+**Prevention:** Always resolve the absolute path of an executable using `shutil.which()` (or a trusted configuration) before passing it to `subprocess`, ensuring the application runs exactly the intended binary.
