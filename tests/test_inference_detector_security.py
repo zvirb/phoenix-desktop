@@ -44,8 +44,12 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
         self.assertEqual(detector.ollama_host, "http://localhost:11450")
 
     @patch('inference_detector.subprocess.run')
-    def test_tailscale_ip_masking(self, mock_run):
+    @patch('shutil.which')
+    def test_tailscale_ip_masking(self, mock_which, mock_run):
         """Test that Tailscale IP is masked in logs."""
+        # Mock shutil.which so logic proceeds
+        mock_which.return_value = "/usr/bin/tailscale"
+
         # Setup mock to return a valid Tailscale IP
         mock_result = MagicMock()
         mock_result.returncode = 0
@@ -71,6 +75,45 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
                     break
 
             self.assertTrue(found_masked, f"Log message did not contain masked IP. Logs: {cm.output}")
+
+    @patch('inference_detector.subprocess.run')
+    @patch('shutil.which')
+    def test_tailscale_uses_absolute_path(self, mock_which, mock_run):
+        """Test that subprocess.run is called with an absolute path for tailscale."""
+
+        # Mock shutil.which to return a specific absolute path
+        expected_path = "/usr/bin/tailscale"
+        mock_which.return_value = expected_path
+
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "100.1.2.3"
+        mock_run.return_value = mock_result
+
+        detector = InferenceDetector()
+        detector.clear_cache() # Ensure cache is cleared
+        detector.get_tailscale_ip()
+
+        # Verify shutil.which was called
+        mock_which.assert_called_with('tailscale')
+
+        # Verify subprocess.run was called with the absolute path
+        args, _ = mock_run.call_args
+        command = args[0]
+        self.assertEqual(command[0], expected_path)
+
+    @patch('inference_detector.subprocess.run')
+    @patch('shutil.which')
+    def test_tailscale_not_found_via_which(self, mock_which, mock_run):
+        """Test behavior when tailscale is not found via shutil.which."""
+        mock_which.return_value = None
+
+        detector = InferenceDetector()
+        detector.clear_cache()
+        detector.get_tailscale_ip()
+
+        # Verify subprocess.run was NOT called
+        mock_run.assert_not_called()
 
 if __name__ == '__main__':
     unittest.main()

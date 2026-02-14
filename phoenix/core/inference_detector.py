@@ -133,21 +133,29 @@ class InferenceDetector:
         """
         # Method 1: Try using tailscale CLI (most reliable)
         try:
-            result = subprocess.run(
-                ['tailscale', 'ip', '--4'],
-                capture_output=True,
-                text=True,
-                timeout=5,
-                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
-            )
-            if result.returncode == 0:
-                ip = result.stdout.strip()
-                if ip and ip.startswith('100.'):
-                    # Mask IP in logs
-                    parts = ip.split('.')
-                    masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
-                    logger.debug(f"Tailscale IP from CLI: {masked}")
-                    return ip
+            # Security: Use absolute path to prevent path interception
+            import shutil
+            tailscale_path = shutil.which('tailscale')
+
+            if tailscale_path:
+                result = subprocess.run(
+                    [tailscale_path, 'ip', '--4'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+                )
+                if result.returncode == 0:
+                    ip = result.stdout.strip()
+                    if ip and ip.startswith('100.'):
+                        # Mask IP in logs
+                        parts = ip.split('.')
+                        masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
+                        logger.debug(f"Tailscale IP from CLI: {masked}")
+                        return ip
+            else:
+                logger.debug("Tailscale CLI not found via shutil.which")
+
         except FileNotFoundError:
             logger.debug("Tailscale CLI not found in PATH")
         except subprocess.TimeoutExpired:
