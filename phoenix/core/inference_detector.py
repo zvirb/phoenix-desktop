@@ -112,8 +112,8 @@ class InferenceDetector:
         import time
         current_time = time.time()
         
-        # Use cached result if still valid
-        if self._tailscale_cache is not None and (current_time - self._tailscale_cache_time) < self.cache_duration:
+        # Use cached result if still valid (even if None)
+        if self._tailscale_cache_time > 0 and (current_time - self._tailscale_cache_time) < self.cache_duration:
             return self._tailscale_cache
         
         tailscale_ip = self._detect_tailscale_ip()
