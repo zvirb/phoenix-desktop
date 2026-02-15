@@ -115,5 +115,38 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
         # Verify subprocess.run was NOT called
         mock_run.assert_not_called()
 
+    @patch('inference_detector.subprocess.run')
+    @patch('shutil.which')
+    @patch('os.path.exists')
+    def test_tailscale_cwd_vulnerability(self, mock_exists, mock_which, mock_run):
+        """Test that tailscale in CWD is ignored."""
+        import os
+
+        # Simulate trusted paths not existing (so it falls back to shutil.which)
+        mock_exists.return_value = False
+
+        # Setup mock to return a path in CWD
+        cwd = os.getcwd()
+        malicious_path = os.path.join(cwd, 'tailscale.exe')
+        mock_which.return_value = malicious_path
+
+        # Run test
+        detector = InferenceDetector()
+        detector.clear_cache()
+
+        # We expect a warning log about ignoring CWD
+        with self.assertLogs('inference_detector', level='WARNING') as cm:
+            ip = detector.get_tailscale_ip()
+
+            # Verify subprocess.run was NOT called
+            mock_run.assert_not_called()
+
+            # Verify return value is None (since trusted paths failed too)
+            self.assertIsNone(ip)
+
+            # Verify warning message
+            found = any("Ignored tailscale executable in CWD" in log for log in cm.output)
+            self.assertTrue(found, f"Warning not found in logs: {cm.output}")
+
 if __name__ == '__main__':
     unittest.main()

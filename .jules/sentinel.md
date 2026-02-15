@@ -48,3 +48,8 @@
 **Vulnerability:** The application executed `tailscale` using `subprocess.run(['tailscale', ...])` without an absolute path. On Windows, this behavior implicitly searches the current working directory first, allowing a malicious `tailscale.exe` placed alongside the application to hijack execution.
 **Learning:** `subprocess.run` (and `Popen`) with a command name alone is unsafe on Windows due to legacy search order rules that prioritize the CWD.
 **Prevention:** Always resolve the absolute path of an executable using `shutil.which()` (or a trusted configuration) before passing it to `subprocess`, ensuring the application runs exactly the intended binary.
+
+## 2026-10-31 - Insecure Search Path with shutil.which
+**Vulnerability:** `shutil.which` blindly follows the system PATH, which may include the current working directory (CWD) on insecurely configured systems, allowing a malicious binary to be executed.
+**Learning:** `shutil.which` is not a security control; it only resolves paths. Validation is required.
+**Prevention:** Prioritize trusted absolute paths and validate that `shutil.which` results are not within the CWD (using `os.path.normcase` for Windows compatibility).
