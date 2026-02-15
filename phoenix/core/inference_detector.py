@@ -133,9 +133,44 @@ class InferenceDetector:
         """
         # Method 1: Try using tailscale CLI (most reliable)
         try:
-            # Security: Use absolute path to prevent path interception
             import shutil
-            tailscale_path = shutil.which('tailscale')
+            import os
+
+            # Security: Check standard installation paths first to prevent path interception
+            # or DLL hijacking from the current working directory.
+            trusted_paths = [
+                r"C:\Program Files\Tailscale\tailscale.exe",
+                r"C:\Program Files (x86)\Tailscale\tailscale.exe",
+                "/usr/bin/tailscale",
+                "/usr/local/bin/tailscale",
+                "/opt/tailscale/tailscale"
+            ]
+
+            tailscale_path = None
+
+            # Check trusted paths first
+            for path in trusted_paths:
+                if os.path.exists(path) and os.access(path, os.X_OK):
+                    tailscale_path = path
+                    break
+
+            # Fallback to PATH search if not found in standard locations
+            if not tailscale_path:
+                tailscale_path = shutil.which('tailscale')
+
+                # Security: Validate that the resolved path is NOT in the current working directory
+                if tailscale_path:
+                    try:
+                        cwd = os.getcwd()
+                        resolved_path = os.path.abspath(tailscale_path)
+                        # Check if the executable is directly in the CWD
+                        # Use normcase for case-insensitive file systems (Windows)
+                        if os.path.normcase(os.path.dirname(resolved_path)) == os.path.normcase(cwd):
+                            logger.warning(f"Security: Ignored tailscale executable in CWD: {resolved_path}")
+                            tailscale_path = None
+                    except Exception as e:
+                        logger.warning(f"Security: Error validating tailscale path: {e}")
+                        tailscale_path = None
 
             if tailscale_path:
                 result = subprocess.run(
@@ -154,7 +189,7 @@ class InferenceDetector:
                         logger.debug(f"Tailscale IP from CLI: {masked}")
                         return ip
             else:
-                logger.debug("Tailscale CLI not found via shutil.which")
+                logger.debug("Tailscale CLI not found (checked trusted paths and PATH)")
 
         except FileNotFoundError:
             logger.debug("Tailscale CLI not found in PATH")
