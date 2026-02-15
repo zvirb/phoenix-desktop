@@ -91,7 +91,8 @@ class WindowDetector:
 
                 # Prevent cache from growing too large
                 if len(_pid_cache) > 100:
-                    _pid_cache.clear()
+                    # Remove the oldest entry (FIFO) to maintain cache size
+                    _pid_cache.pop(next(iter(_pid_cache)))
             
             # Update cache
             self._last_hwnd = hwnd
