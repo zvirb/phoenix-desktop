@@ -2,6 +2,7 @@
 Secure token management for Phoenix Desktop Tracker.
 Uses Windows Credential Manager to securely store authentication tokens.
 """
+import os
 import sys
 import getpass
 from typing import Optional
@@ -35,11 +36,20 @@ class TokenManager:
         """Initialize fallback encryption key."""
         key_file = Path.home() / ".phoenix_key"
         if key_file.exists():
+            # Security: Ensure correct permissions on existing key
+            try:
+                key_file.chmod(0o600)
+            except Exception:
+                pass
             self.encryption_key = key_file.read_bytes()
         else:
             self.encryption_key = Fernet.generate_key()
-            key_file.write_bytes(self.encryption_key)
-            key_file.chmod(0o600)  # Read/write for owner only
+            # Security: Use os.open to atomically create file with 0600 permissions
+            fd = os.open(str(key_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            try:
+                os.write(fd, self.encryption_key)
+            finally:
+                os.close(fd)
     
     def save_token(self, token: str) -> bool:
         """
@@ -79,8 +89,20 @@ class TokenManager:
         encrypted = fernet.encrypt(token.encode())
         
         token_file = Path.home() / self.FALLBACK_FILE
-        token_file.write_bytes(encrypted)
-        token_file.chmod(0o600)
+
+        # Security: Ensure correct permissions if file already exists
+        if token_file.exists():
+            try:
+                token_file.chmod(0o600)
+            except Exception:
+                pass
+
+        # Security: Use os.open to atomically create file with 0600 permissions
+        fd = os.open(str(token_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        try:
+            os.write(fd, encrypted)
+        finally:
+            os.close(fd)
     
     def get_token(self) -> Optional[str]:
         """

@@ -53,3 +53,8 @@
 **Vulnerability:** `shutil.which` blindly follows the system PATH, which may include the current working directory (CWD) on insecurely configured systems, allowing a malicious binary to be executed.
 **Learning:** `shutil.which` is not a security control; it only resolves paths. Validation is required.
 **Prevention:** Prioritize trusted absolute paths and validate that `shutil.which` results are not within the CWD (using `os.path.normcase` for Windows compatibility).
+
+## 2026-02-16 - Insecure File Creation Race Condition
+**Vulnerability:** The `TokenManager` created sensitive files (encryption key and token) with default permissions (readable by others) and then restricted them with `chmod`, leaving a race condition window where the file was world-readable.
+**Learning:** File creation and permission setting must be atomic to prevent race conditions.
+**Prevention:** Use `os.open` with `O_CREAT | O_WRONLY | O_TRUNC` and the desired mode (e.g., `0o600`) to set permissions at the moment of creation.
