@@ -16,6 +16,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [taskInput, setTaskInput] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [captureStatus, setCaptureStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const copyTimeoutRef = useRef<number | null>(null);
   const settingsBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -146,6 +147,20 @@ function App() {
     }
   };
 
+  const handleCapture = async () => {
+    try {
+      await invoke('trigger_capture');
+      setLogs(prev => ["[Capture] Manual Trigger Sent", ...prev]);
+      setCaptureStatus('success');
+      setTimeout(() => setCaptureStatus('idle'), 2000);
+    } catch (e) {
+      console.error(e);
+      setLogs(prev => [`[Capture] Failed: ${e}`, ...prev]);
+      setCaptureStatus('error');
+      setTimeout(() => setCaptureStatus('idle'), 2000);
+    }
+  };
+
   return (
     <main className="omnibox-container">
       <div className="search-bar" aria-busy={loading}>
@@ -182,17 +197,27 @@ function App() {
           </button>
           <button
             className="icon-button"
-            aria-label="Capture screenshot"
-            title="Capture screenshot"
-            onClick={() => {
-              invoke('trigger_capture');
-              setLogs(prev => ["[Capture] Manual Trigger Sent", ...prev]);
-            }}
+            aria-label={captureStatus === 'success' ? "Screenshot captured" : (captureStatus === 'error' ? "Capture failed" : "Capture screenshot")}
+            title={captureStatus === 'success' ? "Screenshot captured" : (captureStatus === 'error' ? "Capture failed" : "Capture screenshot")}
+            onClick={handleCapture}
+            style={{ color: captureStatus === 'success' ? '#4ade80' : (captureStatus === 'error' ? '#ef4444' : 'inherit') }}
           >
-            <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
+            {captureStatus === 'success' ? (
+              <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            ) : captureStatus === 'error' ? (
+              <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            ) : (
+              <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
