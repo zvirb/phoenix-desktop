@@ -78,11 +78,13 @@ class ContextWorker(QThread):
                 
                 # Capture
                 sct_img = sct.grab(monitor)
-                img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
                 
                 # Check for significant change (MSE)
-                # Optimization: Check on full image first to avoid expensive thumbnail resize if no change
-                if self.activity_detector.has_significant_change(img):
+                # Optimization: Check on raw mss object first to avoid expensive PIL Image creation if no change
+                if self.activity_detector.has_significant_change(sct_img):
+                    # Convert to PIL Image for processing
+                    img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+
                     # Resize (Standardize)
                     max_width = 1024
                     img.thumbnail((max_width, max_width))

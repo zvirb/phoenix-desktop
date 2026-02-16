@@ -31,29 +31,56 @@ class ActivityDetector:
             
         self.previous_image_gray: Optional[np.ndarray] = None
     
-    def has_significant_change(self, current_image: Image.Image) -> bool:
+    def has_significant_change(self, current_image) -> bool:
         """
         Check if the current image has changed significantly from the previous one.
         
         Args:
-            current_image: PIL Image to compare
+            current_image: PIL Image or mss.tools.ScreenShot (duck-typed)
             
         Returns:
             True if there is a significant change, False otherwise
         """
         try:
-            # Resize for performance and consistency (e.g., 320x240)
-            # This drastically reduces the number of pixels to compare
-            target_size = (320, 240)
-            # Optimization: Use NEAREST resampling for change detection.
-            # It is ~40x faster than BILINEAR for downscaling and sufficient for
-            # detecting significant changes in screen content.
-            small_img = current_image.resize(target_size, resample=Image.Resampling.NEAREST)
+            # Check for mss screenshot object (duck typing)
+            # This avoids creating a full PIL Image object, saving memory allocation and copy.
+            if hasattr(current_image, 'bgra') and hasattr(current_image, 'size'):
+                # Zero-copy view of raw bytes
+                width, height = current_image.size
+                # Note: mss returns bgra
+                arr = np.frombuffer(current_image.bgra, dtype=np.uint8)
+                arr = arr.reshape((height, width, 4))
+
+                # Calculate steps to downscale to approx 320x240
+                step_y = max(1, height // 240)
+                step_x = max(1, width // 320)
+
+                # Subsample using slicing (Nearest Neighbor equivalent)
+                # Take B, G, R channels (ignore Alpha)
+                small_arr = arr[::step_y, ::step_x, :3]
+
+                # Convert to grayscale using standard coefficients
+                # BGR order: 0.114*B + 0.587*G + 0.299*R
+                # Use float32 for calculation
+                b = small_arr[..., 0].astype(np.float32)
+                g = small_arr[..., 1].astype(np.float32)
+                r = small_arr[..., 2].astype(np.float32)
+
+                current_array = (0.114 * b + 0.587 * g + 0.299 * r)
             
-            # Optimization: Convert to grayscale using 'L' mode directly.
-            # Benchmark showed this is ~10% faster than ImageOps.grayscale.
-            gray_img = small_img.convert('L')
-            current_array = np.array(gray_img, dtype=np.float32)
+            else:
+                # Fallback for standard PIL Image
+                # Resize for performance and consistency (e.g., 320x240)
+                target_size = (320, 240)
+                # Optimization: Use NEAREST resampling for change detection.
+                # It is ~40x faster than BILINEAR for downscaling and sufficient for
+                # detecting significant changes in screen content.
+                small_img = current_image.resize(target_size, resample=Image.Resampling.NEAREST)
+
+                # Optimization: Convert to grayscale using 'L' mode directly.
+                # Benchmark showed this is ~10% faster than ImageOps.grayscale.
+                gray_img = small_img.convert('L')
+                current_array = np.array(gray_img, dtype=np.float32)
             
             # If this is the first image, consider it significant (or init baseline)
             if self.previous_image_gray is None:
