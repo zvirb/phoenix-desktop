@@ -39,3 +39,7 @@
 ## 2027-01-05 - Silencing Decorative SVGs
 **Learning:** Icon buttons with `aria-label` often contain SVG graphics that screen readers unnecessarily announce as "graphic" or try to parse, creating noise.
 **Action:** Always add `aria-hidden="true"` to SVG elements inside buttons that already provide an accessible name via `aria-label` or text content.
+
+## 2027-05-20 - Fire-and-Forget Feedback
+**Learning:** Actions that trigger background processes (like 'Capture') often lack immediate visual feedback, leaving users unsure if the click registered. Logging to a debug console is insufficient.
+**Action:** For fire-and-forget buttons, always implement a temporary 'success' state (icon change/color flash) on the button itself to confirm the command was sent.
