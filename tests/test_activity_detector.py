@@ -55,5 +55,36 @@ class TestActivityDetector(unittest.TestCase):
         sim = self.detector._calculate_similarity_mse(arr3, arr4)
         self.assertAlmostEqual(sim, 0.0, places=4)
 
+    def test_mss_object_support(self):
+        """Test the fast path for mss-like screenshot objects."""
+        # Mock mss.tools.ScreenShot
+        class MockScreenShot:
+            def __init__(self, bgra, size):
+                self.bgra = bgra
+                self.size = size
+                self.width, self.height = size
+
+        width, height = 320, 240
+        # White image (BGRA: 255, 255, 255, 255)
+        white_pixel = b'\xff\xff\xff\xff'
+        bgra_white = white_pixel * (width * height)
+
+        # Black image (BGRA: 0, 0, 0, 255)
+        black_pixel = b'\x00\x00\x00\xff'
+        bgra_black = black_pixel * (width * height)
+
+        sct_white = MockScreenShot(bgra_white, (width, height))
+        sct_white2 = MockScreenShot(bgra_white, (width, height))
+        sct_black = MockScreenShot(bgra_black, (width, height))
+
+        # 1. Baseline (white) -> True
+        self.assertTrue(self.detector.has_significant_change(sct_white))
+
+        # 2. Compare identical (white) -> False
+        self.assertFalse(self.detector.has_significant_change(sct_white2))
+
+        # 3. Compare different (black) -> True
+        self.assertTrue(self.detector.has_significant_change(sct_black))
+
 if __name__ == '__main__':
     unittest.main()

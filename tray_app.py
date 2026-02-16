@@ -364,19 +364,22 @@ class PhoenixTrayApp:
             return False
         
         try:
-            # Capture screen (returns PIL Image)
-            img = self.capture_screen()
-            if not img:
+            # Capture screen (returns raw mss object)
+            sct_img = self.capture_screen_raw()
+            if not sct_img:
                 logger.warning("Screenshot capture returned empty")
                 return False
             
             # Check for significant change on RAW image
-            # Optimization: Avoid resize/compression if no change
-            if not self.activity_detector.has_significant_change(img):
+            # Optimization: Avoid resize/compression/PIL creation if no change
+            if not self.activity_detector.has_significant_change(sct_img):
                 logger.debug("No significant change detected, skipping upload")
                 return True
             
             # Change detected: Prepare for upload
+            # Convert to PIL Image
+            img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+
             # Resize
             max_width = settings_manager.get_setting('max_image_width', 1024)
             img.thumbnail((max_width, max_width))
@@ -407,8 +410,8 @@ class PhoenixTrayApp:
             logger.error(f"Screenshot processing failed: {e}")
             return False
     
-    def capture_screen(self):
-        """Capture the current screen (focused monitor) and return as PIL Image."""
+    def capture_screen_raw(self):
+        """Capture the current screen (focused monitor) and return as mss screenshot."""
         try:
             with mss.mss() as sct:
                 # Detect which monitor has the active window
@@ -416,9 +419,7 @@ class PhoenixTrayApp:
                 monitor = sct.monitors[monitor_idx]
                 
                 screenshot = sct.grab(monitor)
-                
-                img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
-                return img
+                return screenshot
         except Exception as e:
             logger.error(f"Screenshot capture failed: {e}")
             return None
