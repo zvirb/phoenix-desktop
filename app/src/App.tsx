@@ -16,7 +16,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [taskInput, setTaskInput] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [captureStatus, setCaptureStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [captureStatus, setCaptureStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const copyTimeoutRef = useRef<number | null>(null);
   const settingsBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -70,6 +70,8 @@ function App() {
 
   useEffect(() => {
     // ... existing effect ...
+    // All events from the Python sidecar are emitted as 'telemetry' events with a JSON payload
+    // The payload.event field determines the specific event type (e.g., context_update, ocr_status, etc.)
     const unlistenPromise = listen<string>('telemetry', (event) => {
       try {
         const payload = JSON.parse(event.payload);
@@ -84,6 +86,10 @@ function App() {
             : (payload.payload.message || JSON.stringify(payload.payload));
           setLogs(prev => [`Error: ${errMsg}`, ...prev]);
           setStatus("Error");
+          if (payload.payload && (payload.payload.code === 'OCR_FAIL' || payload.payload.code === 'OCR_NET_FAIL')) {
+            setCaptureStatus('error');
+            setTimeout(() => setCaptureStatus('idle'), 2000);
+          }
         } else if (payload.event === "context_update") {
           setStatus(payload.payload.status);
           setActiveTime(payload.payload.active_time_seconds);
@@ -113,6 +119,14 @@ function App() {
             setSubtasks([`Failed: ${payload.payload.error}`]);
           }
           setLoading(false);
+        } else if (payload.event === "ocr_status") {
+          if (payload.payload.status === "processing") {
+            setCaptureStatus('loading');
+          }
+        } else if (payload.event === "ocr_result") {
+          setCaptureStatus('success');
+          setTimeout(() => setCaptureStatus('idle'), 2000);
+          setLogs(prev => [`OCR: ${payload.payload.text}`, ...prev]);
         }
       } catch (e) {
         console.error("Failed to parse telemetry:", e);
@@ -149,13 +163,13 @@ function App() {
 
   const handleCapture = async () => {
     try {
+      setCaptureStatus('loading');
       await invoke('trigger_capture');
       setLogs(prev => ["[Capture] Manual Trigger Sent", ...prev]);
-      setCaptureStatus('success');
-      setTimeout(() => setCaptureStatus('idle'), 2000);
     } catch (e) {
       console.error(e);
       setLogs(prev => [`[Capture] Failed: ${e}`, ...prev]);
+      // Ensure state is reset on error
       setCaptureStatus('error');
       setTimeout(() => setCaptureStatus('idle'), 2000);
     }
@@ -197,12 +211,15 @@ function App() {
           </button>
           <button
             className="icon-button"
-            aria-label={captureStatus === 'success' ? "Screenshot captured" : (captureStatus === 'error' ? "Capture failed" : "Capture screenshot")}
-            title={captureStatus === 'success' ? "Screenshot captured" : (captureStatus === 'error' ? "Capture failed" : "Capture screenshot")}
+            aria-label={captureStatus === 'success' ? "Screenshot captured" : captureStatus === 'error' ? "Capture failed" : captureStatus === 'loading' ? "Capturing screenshot..." : "Capture screenshot"}
+            title={captureStatus === 'success' ? "Screenshot captured" : captureStatus === 'error' ? "Capture failed" : captureStatus === 'loading' ? "Capturing screenshot..." : "Capture screenshot"}
+            disabled={captureStatus === 'loading'}
             onClick={handleCapture}
             style={{ color: captureStatus === 'success' ? '#4ade80' : (captureStatus === 'error' ? '#ef4444' : 'inherit') }}
           >
-            {captureStatus === 'success' ? (
+            {captureStatus === 'loading' ? (
+              <div className="spinner" role="status" aria-label="Capturing"></div>
+            ) : captureStatus === 'success' ? (
               <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
