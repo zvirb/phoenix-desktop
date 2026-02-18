@@ -240,14 +240,9 @@ function App() {
       </div>
 
       {subtasks.length > 0 && (
-        <div className="subtasks-card" style={{
-          background: '#252526',
-          padding: 15,
-          borderRadius: 8,
-          marginBottom: 20
-        }}>
+        <div className="subtasks-card" role="region" aria-label="Task breakdown">
           <h3>Suggested Breakdown</h3>
-          <ul style={{ paddingLeft: 20 }}>
+          <ul className="subtasks-list">
             {subtasks.map((t, i) => <li key={i}>{typeof t === 'string' ? t : JSON.stringify(t)}</li>)}
           </ul>
         </div>

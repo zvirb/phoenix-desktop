@@ -147,6 +147,36 @@ body {
   color: #888;
 }
 
+/* Subtasks Card Styles */
+.subtasks-card {
+  background: #252526;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #333;
+  animation: slideIn 0.3s ease-out;
+}
+
+.subtasks-card h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subtasks-list {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.subtasks-list li {
+  margin-bottom: 6px;
+  line-height: 1.4;
+  color: #e1e1e1;
+}
+
 /* Context Card Styles */
 .context-card {
   background: #1e1e1e;
@@ -224,6 +254,15 @@ body {
     0% { opacity: 1; }
     50% { opacity: 0.6; }
     100% { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subtasks-card { animation: none; }
 }
 
 /* Accessibility & Button Styles */
