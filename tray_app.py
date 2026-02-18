@@ -85,6 +85,9 @@ class PhoenixTrayApp:
         self.tracker_thread = None
         self.token_manager = TokenManager()
         
+        # Persistent mss instance
+        self.sct = None
+
         # Tracking state
         self.api_client = None
         self.window_detector = WindowDetector()
@@ -260,6 +263,14 @@ class PhoenixTrayApp:
         self.running = False
         if self.tracker_thread:
             self.tracker_thread.join(timeout=5)
+
+        # Clean up mss instance
+        if self.sct:
+            try:
+                self.sct.close()
+            except Exception:
+                pass
+            self.sct = None
         
         logger.info("⏸️ Tracker stopped")
         self.notify("Phoenix Tracker", "Tracking stopped")
@@ -413,15 +424,25 @@ class PhoenixTrayApp:
     def capture_screen_raw(self):
         """Capture the current screen (focused monitor) and return as mss screenshot."""
         try:
-            with mss.mss() as sct:
-                # Detect which monitor has the active window
-                monitor_idx = self.window_detector.get_focused_monitor_index(sct.monitors)
-                monitor = sct.monitors[monitor_idx]
-                
-                screenshot = sct.grab(monitor)
-                return screenshot
+            # Lazy initialization and reuse of mss instance
+            if self.sct is None:
+                self.sct = mss.mss()
+
+            # Detect which monitor has the active window
+            monitor_idx = self.window_detector.get_focused_monitor_index(self.sct.monitors)
+            monitor = self.sct.monitors[monitor_idx]
+
+            screenshot = self.sct.grab(monitor)
+            return screenshot
         except Exception as e:
-            logger.error(f"Screenshot capture failed: {e}")
+            logger.error(f"Screenshot capture failed: {e!r}")
+            # If capture fails (e.g. display lost), close and reset to force re-init next time
+            if self.sct:
+                try:
+                    self.sct.close()
+                except Exception:
+                    pass
+                self.sct = None
             return None
     
     def view_logs(self, icon=None, item=None):
