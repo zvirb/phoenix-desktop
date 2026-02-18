@@ -7,6 +7,7 @@ import sqlite3
 import json
 import logging
 import os
+import time
 import base64
 from pathlib import Path
 from datetime import datetime
@@ -65,7 +66,26 @@ class RequestQueue:
                     os.close(fd)
             except FileExistsError:
                 # Race condition: file created by another process
-                self.encryption_key = self.key_file.read_bytes()
+                try:
+                    # Wait for the other process to finish writing
+                    for attempt in range(5):
+                        try:
+                            time.sleep(0.1)
+                            key = self.key_file.read_bytes()
+                            if key and len(key) > 0:
+                                self.encryption_key = key
+                                break
+                        except Exception:
+                            pass
+
+                    # If still failing, try one last read
+                    if not hasattr(self, 'encryption_key'):
+                        self.encryption_key = self.key_file.read_bytes()
+                except Exception as e:
+                    logger.error(f"Failed to read existing encryption key: {e}")
+                    # Fallback to memory-only key (persistence broken but app works for this session)
+                    self.encryption_key = new_key
+
             except Exception as e:
                 logger.error(f"Failed to save encryption key: {e}")
                 # Fallback to memory-only key (persistence broken but app works for this session)
