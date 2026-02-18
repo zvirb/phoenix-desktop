@@ -4,6 +4,8 @@ Uses Windows Credential Manager to securely store authentication tokens.
 """
 import os
 import sys
+import time
+import logging
 import getpass
 from typing import Optional
 
@@ -19,6 +21,8 @@ except ImportError:
 
 from config import config
 
+logger = logging.getLogger(__name__)
+
 
 class TokenManager:
     """Secure token storage and retrieval."""
@@ -29,27 +33,68 @@ class TokenManager:
     def __init__(self):
         """Initialize token manager."""
         if not WINDOWS_AVAILABLE:
-            print("⚠️  Warning: pywin32 not available. Using encrypted file storage as fallback.")
+            # Only print warning once or rely on logging
+            if not hasattr(self, '_logged_warning'):
+                print("⚠️  Warning: pywin32 not available. Using encrypted file storage as fallback.")
+                self._logged_warning = True
             self._init_fallback_encryption()
     
     def _init_fallback_encryption(self):
         """Initialize fallback encryption key."""
         key_file = Path.home() / ".phoenix_key"
-        if key_file.exists():
-            # Security: Ensure correct permissions on existing key
-            try:
-                key_file.chmod(0o600)
-            except Exception:
-                pass
-            self.encryption_key = key_file.read_bytes()
-        else:
-            self.encryption_key = Fernet.generate_key()
+
+        # Try to read existing key first (with retry for race conditions)
+        for attempt in range(3):
+            if key_file.exists():
+                try:
+                    # Security: Ensure correct permissions on existing key
+                    try:
+                        key_file.chmod(0o600)
+                    except Exception:
+                        pass
+
+                    key = key_file.read_bytes()
+                    if key and len(key) > 0:
+                        self.encryption_key = key
+                        return
+                except Exception:
+                    pass # Retry if read fails
+            else:
+                break # File doesn't exist, proceed to creation
+
+            # Wait briefly if file exists but read failed (maybe being written)
+            time.sleep(0.1)
+
+        # Generate new key and save atomically
+        self.encryption_key = Fernet.generate_key()
+        try:
             # Security: Use os.open to atomically create file with 0600 permissions
-            fd = os.open(str(key_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            # Use O_EXCL to fail if file already exists (prevent overwriting race condition)
+            fd = os.open(str(key_file), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
             try:
                 os.write(fd, self.encryption_key)
             finally:
                 os.close(fd)
+        except FileExistsError:
+            # Race condition: file created by another process between check and open
+            # Wait for the other process to finish writing
+            for attempt in range(5):
+                try:
+                    time.sleep(0.1)
+                    key = key_file.read_bytes()
+                    if key and len(key) > 0:
+                        self.encryption_key = key
+                        return
+                except Exception:
+                    pass
+
+            # If still failing, we have a problem (permission or empty file)
+            # Try to read one last time or re-raise
+            try:
+                self.encryption_key = key_file.read_bytes()
+            except Exception as e:
+                # Log error but don't crash if possible? No, we need encryption key.
+                raise RuntimeError(f"Failed to initialize encryption key: {e}")
     
     def save_token(self, token: str) -> bool:
         """
@@ -68,7 +113,9 @@ class TokenManager:
                 self._store_fallback(token)
             return True
         except Exception as e:
-            print(f"Failed to save token: {e}")
+            # Security: Log error but avoid printing sensitive details to stdout
+            logger.error(f"Failed to save token: {e}")
+            print(f"Failed to save token: {type(e).__name__}")
             return False
     
     def _store_windows(self, token: str) -> None:
@@ -210,7 +257,9 @@ class TokenManager:
             print("✅ Token stored securely!")
             return True
         except Exception as e:
-            print(f"❌ Failed to store token: {e}")
+            # Security: Don't leak token in exception message
+            logger.error(f"Failed to store token in setup wizard: {e}")
+            print(f"❌ Failed to store token. Error: {type(e).__name__}")
             return False
 
 
