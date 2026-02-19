@@ -3,6 +3,21 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 
+const kbdStyle = {
+  backgroundColor: '#333',
+  borderRadius: '4px',
+  border: '1px solid #444',
+  boxShadow: '0 1px 1px rgba(0, 0, 0, 0.2), 0 2px 0 0 rgba(255, 255, 255, 0.1) inset',
+  color: '#eee',
+  display: 'inline-block',
+  fontFamily: 'Consolas, "Liberation Mono", Menlo, Courier, monospace',
+  fontSize: '0.85em',
+  fontWeight: 700,
+  lineHeight: 1,
+  padding: '2px 5px',
+  whiteSpace: 'nowrap',
+} as const;
+
 function App() {
   const [status, setStatus] = useState("Connecting...");
   const [activeTime, setActiveTime] = useState(0);
@@ -19,6 +34,7 @@ function App() {
   const [captureStatus, setCaptureStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const copyTimeoutRef = useRef<number | null>(null);
   const settingsBtnRef = useRef<HTMLButtonElement>(null);
+  const settingsModalRef = useRef<HTMLDivElement>(null);
 
   const getStatusColor = (s: string) => {
     switch (s.toLowerCase()) {
@@ -66,6 +82,36 @@ function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSettings]);
+
+  useEffect(() => {
+    if (!showSettings || !settingsModalRef.current) return;
+    const modal = settingsModalRef.current;
+
+    const focusable = modal.querySelectorAll('button, input, [href], select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable.length === 0) return;
+
+    const first = focusable[0] as HTMLElement;
+    const last = focusable[focusable.length - 1] as HTMLElement;
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    modal.addEventListener('keydown', handleTab);
+    return () => modal.removeEventListener('keydown', handleTab);
   }, [showSettings]);
 
   useEffect(() => {
@@ -302,6 +348,7 @@ function App() {
           onClick={(e) => { if (e.target === e.currentTarget) closeSettings(); }}
         >
           <div
+            ref={settingsModalRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="settings-title"
@@ -387,6 +434,10 @@ function App() {
                   {status.charAt(0).toUpperCase() + status.slice(1)}
                 </span>
               </div>
+            </div>
+
+            <div style={{ marginTop: 10, textAlign: 'center', fontSize: '12px', color: '#666' }}>
+              Press <kbd style={kbdStyle}>Esc</kbd> to close
             </div>
           </div>
         </div>
