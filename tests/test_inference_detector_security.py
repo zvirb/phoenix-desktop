@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 import logging
+import socket
 
 # Add phoenix/core to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "phoenix" / "core"))
@@ -10,6 +11,41 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "phoenix" / "core"))
 from inference_detector import InferenceDetector
 
 class TestInferenceDetectorSecurity(unittest.TestCase):
+
+    def test_public_ip_detection(self):
+        """Test that public IPs are not detected as Tailscale IPs."""
+        detector = InferenceDetector()
+
+        # Mock psutil to return a public IP starting with 100.
+        with patch('psutil.net_if_addrs') as mock_net_if_addrs:
+            # Mock address structure
+            addr = MagicMock()
+            addr.family = socket.AF_INET
+            addr.address = '100.1.2.3' # Public IP (Verizon)
+
+            mock_net_if_addrs.return_value = {
+                'Ethernet': [addr]
+            }
+
+            # This should return None now
+            result = detector._detect_tailscale_ip()
+            self.assertIsNone(result, "Should not detect public IP 100.1.2.3 as Tailscale IP")
+
+    def test_cgnat_ip_detection(self):
+        """Test that valid CGNAT IPs are detected."""
+        detector = InferenceDetector()
+
+        with patch('psutil.net_if_addrs') as mock_net_if_addrs:
+            addr = MagicMock()
+            addr.family = socket.AF_INET
+            addr.address = '100.64.0.1' # Valid CGNAT/Tailscale IP
+
+            mock_net_if_addrs.return_value = {
+                'Tailscale': [addr]
+            }
+
+            result = detector._detect_tailscale_ip()
+            self.assertEqual(result, '100.64.0.1')
 
     def test_init_secure_host(self):
         """Test initialization with secure localhost URL."""

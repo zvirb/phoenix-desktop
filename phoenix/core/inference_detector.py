@@ -124,6 +124,29 @@ class InferenceDetector:
         
         return tailscale_ip
     
+    def _is_cgnat_ip(self, ip: str) -> bool:
+        """
+        Check if IP is in the Carrier Grade NAT (CGNAT) range used by Tailscale (100.64.0.0/10).
+        Range: 100.64.0.0 to 100.127.255.255.
+
+        Security: This prevents public IPs in the 100.0.0.0/8 block (which are valid public IPs)
+        from being incorrectly identified as Tailscale/internal IPs.
+        """
+        try:
+            if not ip or not ip.startswith('100.'):
+                return False
+
+            parts = ip.split('.')
+            if len(parts) != 4:
+                return False
+
+            # Check 2nd octet
+            # 100.64.0.0/10 covers 100.64.x.x to 100.127.x.x
+            octet2 = int(parts[1])
+            return 64 <= octet2 <= 127
+        except (ValueError, IndexError):
+            return False
+
     def _detect_tailscale_ip(self) -> Optional[str]:
         """
         Internal method to detect Tailscale IP using multiple approaches.
@@ -182,7 +205,7 @@ class InferenceDetector:
                 )
                 if result.returncode == 0:
                     ip = result.stdout.strip()
-                    if ip and ip.startswith('100.'):
+                    if self._is_cgnat_ip(ip):
                         # Mask IP in logs
                         parts = ip.split('.')
                         masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
@@ -201,17 +224,28 @@ class InferenceDetector:
         # Method 2: Check network interfaces for Tailscale IP range
         try:
             import psutil
+            candidates = []
+
             for iface_name, addrs in psutil.net_if_addrs().items():
-                # Tailscale interface is often named "Tailscale" on Windows
                 for addr in addrs:
                     if addr.family == socket.AF_INET:
                         ip = addr.address
-                        # Tailscale uses the 100.x.y.z CGNAT range
-                        if ip.startswith('100.'):
-                            parts = ip.split('.')
-                            masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
-                            logger.debug(f"Tailscale IP from interface {iface_name}: {masked}")
-                            return ip
+                        # Strict validation of CGNAT range (100.64.0.0/10)
+                        if self._is_cgnat_ip(ip):
+                            # Prioritize if interface name suggests Tailscale
+                            is_preferred = "tailscale" in iface_name.lower() or "utun" in iface_name.lower()
+                            if is_preferred:
+                                candidates.insert(0, ip)
+                            else:
+                                candidates.append(ip)
+
+            if candidates:
+                ip = candidates[0]
+                parts = ip.split('.')
+                masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
+                logger.debug(f"Tailscale IP from interface: {masked}")
+                return ip
+
         except ImportError:
             logger.debug("psutil not available for network interface detection")
         except Exception as e:
@@ -222,7 +256,7 @@ class InferenceDetector:
             # Try to find IPs by checking all IPs on the machine
             hostname = socket.gethostname()
             for ip in socket.gethostbyname_ex(hostname)[2]:
-                if ip.startswith('100.'):
+                if self._is_cgnat_ip(ip):
                     parts = ip.split('.')
                     masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
                     logger.debug(f"Tailscale IP from hostname resolution: {masked}")
