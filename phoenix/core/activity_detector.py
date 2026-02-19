@@ -68,6 +68,8 @@ class ActivityDetector:
                 r = small_arr[..., 2].astype(np.int32)
 
                 current_array = (114 * b + 587 * g + 299 * r) // 1000
+                # Convert to float32 once to avoid repeated casting in comparisons
+                current_array = current_array.astype(np.float32)
             
             else:
                 # Fallback for standard PIL Image
