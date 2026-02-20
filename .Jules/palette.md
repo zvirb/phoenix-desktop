@@ -43,3 +43,7 @@
 ## 2027-05-20 - Fire-and-Forget Feedback
 **Learning:** Actions that trigger background processes (like 'Capture') often lack immediate visual feedback, leaving users unsure if the click registered. Logging to a debug console is insufficient.
 **Action:** For fire-and-forget buttons, always implement a temporary 'success' state (icon change/color flash) on the button itself to confirm the command was sent.
+
+## 2027-05-21 - Consistent Copy Feedback for Generated Content
+**Learning:** Users often need to transfer generated content (like task breakdowns) to other tools. Providing a dedicated "Copy All" button with immediate visual feedback (icon change) is a high-value, low-effort enhancement that aligns with existing patterns for configuration fields.
+**Action:** When displaying read-only generated lists or text blocks, always include a copy button in the header that provides the same visual and accessible feedback as configuration fields.
