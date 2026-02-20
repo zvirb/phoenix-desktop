@@ -287,7 +287,27 @@ function App() {
 
       {subtasks.length > 0 && (
         <div className="subtasks-card" role="region" aria-label="Task breakdown">
-          <h3>Suggested Breakdown</h3>
+          <div className="subtasks-header">
+            <h3>Suggested Breakdown</h3>
+            <button
+              className="icon-button"
+              aria-label={copiedField === 'subtasks' ? "Copied subtasks" : "Copy subtasks"}
+              title={copiedField === 'subtasks' ? "Copied" : "Copy all"}
+              onClick={() => handleCopy(subtasks.map(t => typeof t === 'string' ? t : JSON.stringify(t)).join('\n'), 'subtasks')}
+              style={{ padding: 4, width: 28, height: 28, color: copiedField === 'subtasks' ? '#4ade80' : 'inherit' }}
+            >
+              {copiedField === 'subtasks' ? (
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              ) : (
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              )}
+            </button>
+          </div>
           <ul className="subtasks-list">
             {subtasks.map((t, i) => <li key={i}>{typeof t === 'string' ? t : JSON.stringify(t)}</li>)}
           </ul>

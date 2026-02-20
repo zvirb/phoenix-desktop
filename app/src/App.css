@@ -157,9 +157,15 @@ body {
   animation: slideIn 0.3s ease-out;
 }
 
-.subtasks-card h3 {
-  margin-top: 0;
+.subtasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 10px;
+}
+
+.subtasks-card h3 {
+  margin: 0;
   font-size: 14px;
   color: #ccc;
   text-transform: uppercase;
