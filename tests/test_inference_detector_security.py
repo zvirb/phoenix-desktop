@@ -181,8 +181,61 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
             self.assertIsNone(ip)
 
             # Verify warning message
-            found = any("Ignored tailscale executable in CWD" in log for log in cm.output)
+            found = any(f"Rejected path in CWD: {malicious_path}" in log for log in cm.output)
             self.assertTrue(found, f"Warning not found in logs: {cm.output}")
+
+    @patch('inference_detector.subprocess.run')
+    @patch('shutil.which')
+    @patch('os.path.exists')
+    def test_tailscale_cwd_subdir_vulnerability(self, mock_exists, mock_which, mock_run):
+        """Test that tailscale in a subdirectory of CWD is ignored."""
+        import os
+
+        # Simulate trusted paths not existing
+        mock_exists.return_value = False
+
+        # Setup mock to return a path in a subdirectory of CWD
+        cwd = os.getcwd()
+        malicious_path = os.path.join(cwd, 'bin', 'tailscale')
+        mock_which.return_value = malicious_path
+
+        detector = InferenceDetector()
+        detector.clear_cache()
+
+        with self.assertLogs('inference_detector', level='WARNING') as cm:
+            ip = detector.get_tailscale_ip()
+
+            mock_run.assert_not_called()
+            self.assertIsNone(ip)
+
+            # Check for the specific warning about CWD
+            found = any(f"Rejected path in CWD: {malicious_path}" in log for log in cm.output)
+            self.assertTrue(found, f"CWD rejection warning not found in logs: {cm.output}")
+
+    @patch('inference_detector.subprocess.run')
+    @patch('shutil.which')
+    @patch('os.path.exists')
+    def test_tailscale_unsafe_path_vulnerability(self, mock_exists, mock_which, mock_run):
+        """Test that tailscale in an arbitrary unsafe path (e.g. /tmp) is ignored."""
+        import os
+
+        mock_exists.return_value = False
+
+        # /tmp is not in the trusted list (/bin, /usr/bin, etc.)
+        unsafe_path = "/tmp/tailscale"
+        mock_which.return_value = unsafe_path
+
+        detector = InferenceDetector()
+        detector.clear_cache()
+
+        with self.assertLogs('inference_detector', level='WARNING') as cm:
+            ip = detector.get_tailscale_ip()
+
+            mock_run.assert_not_called()
+            self.assertIsNone(ip)
+
+            found = any(f"Rejected path outside trusted system directories: {unsafe_path}" in log for log in cm.output)
+            self.assertTrue(found, f"Unsafe path rejection warning not found in logs: {cm.output}")
 
 if __name__ == '__main__':
     unittest.main()

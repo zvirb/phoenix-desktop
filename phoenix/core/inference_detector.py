@@ -44,6 +44,70 @@ class InferenceDetector:
         self._tailscale_cache_time = 0
         self.cache_duration = 60  # Cache results for 60 seconds
     
+    def _is_safe_path(self, path: str) -> bool:
+        """
+        Check if the path is a trusted system binary path.
+        Prevents executing binaries from CWD or user-writable locations.
+        """
+        import os
+
+        if not path:
+            return False
+
+        try:
+            path = os.path.abspath(path)
+
+            # 1. Check against CWD (Recursive)
+            cwd = os.getcwd()
+            # If path starts with cwd, it's inside cwd
+            # Use os.path.commonpath to safely check prefix
+            try:
+                # Use normcase for consistent comparison
+                p_cwd = os.path.normcase(cwd)
+                p_path = os.path.normcase(path)
+
+                if os.path.commonpath([p_cwd, p_path]) == p_cwd:
+                    logger.warning(f"Security: Rejected path in CWD: {path}")
+                    return False
+            except ValueError:
+                # commonpath raises ValueError if paths are on different drives
+                pass
+
+            # 2. Check against System Directories
+            if os.name == 'nt':
+                # Windows trusted paths
+                system_root = os.environ.get('SystemRoot', r'C:\Windows')
+                program_files = os.environ.get('ProgramFiles', r'C:\Program Files')
+                program_files_x86 = os.environ.get('ProgramFiles(x86)', r'C:\Program Files (x86)')
+
+                trusted_roots = [
+                    os.path.normcase(system_root),
+                    os.path.normcase(program_files),
+                    os.path.normcase(program_files_x86)
+                ]
+
+                norm_path = os.path.normcase(path)
+                # Ensure we match directory structure (check separator)
+                is_trusted = any(norm_path.startswith(root) for root in trusted_roots)
+
+            else:
+                # Unix trusted paths
+                trusted_roots = [
+                    "/bin/", "/usr/bin/", "/usr/local/bin/",
+                    "/sbin/", "/usr/sbin/", "/opt/"
+                ]
+                is_trusted = any(path.startswith(root) for root in trusted_roots)
+
+            if not is_trusted:
+                logger.warning(f"Security: Rejected path outside trusted system directories: {path}")
+                return False
+
+            return True
+
+        except Exception as e:
+            logger.warning(f"Security: Path validation error for {path}: {e}")
+            return False
+
     def is_ollama_available(self) -> bool:
         """
         Check if Ollama is running and available for inference.
@@ -179,20 +243,13 @@ class InferenceDetector:
 
             # Fallback to PATH search if not found in standard locations
             if not tailscale_path:
-                tailscale_path = shutil.which('tailscale')
+                found_path = shutil.which('tailscale')
 
-                # Security: Validate that the resolved path is NOT in the current working directory
-                if tailscale_path:
-                    try:
-                        cwd = os.getcwd()
-                        resolved_path = os.path.abspath(tailscale_path)
-                        # Check if the executable is directly in the CWD
-                        # Use normcase for case-insensitive file systems (Windows)
-                        if os.path.normcase(os.path.dirname(resolved_path)) == os.path.normcase(cwd):
-                            logger.warning(f"Security: Ignored tailscale executable in CWD: {resolved_path}")
-                            tailscale_path = None
-                    except Exception as e:
-                        logger.warning(f"Security: Error validating tailscale path: {e}")
+                if found_path:
+                    if self._is_safe_path(found_path):
+                        tailscale_path = found_path
+                    else:
+                        logger.warning(f"Security: Ignored unsafe tailscale path found in PATH: {found_path}")
                         tailscale_path = None
 
             if tailscale_path:
