@@ -47,3 +47,7 @@
 ## 2027-05-21 - Consistent Copy Feedback for Generated Content
 **Learning:** Users often need to transfer generated content (like task breakdowns) to other tools. Providing a dedicated "Copy All" button with immediate visual feedback (icon change) is a high-value, low-effort enhancement that aligns with existing patterns for configuration fields.
 **Action:** When displaying read-only generated lists or text blocks, always include a copy button in the header that provides the same visual and accessible feedback as configuration fields.
+
+## 2027-08-14 - Input Clearing Mechanisms
+**Learning:** In search-heavy interfaces, users frequently need to clear their input to start over. Relying solely on backspace is tedious, especially for mouse users. A dedicated "Clear" button that appears when text is present is a standard expectation that improves flow.
+**Action:** For main search or task inputs, always include a conditionally rendered "Clear" button inside the input container that resets the value and returns focus to the input.

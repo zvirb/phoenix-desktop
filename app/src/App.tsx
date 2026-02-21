@@ -35,6 +35,7 @@ function App() {
   const copyTimeoutRef = useRef<number | null>(null);
   const settingsBtnRef = useRef<HTMLButtonElement>(null);
   const settingsModalRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const getStatusColor = (s: string) => {
     switch (s.toLowerCase()) {
@@ -225,21 +226,50 @@ function App() {
     <main className="omnibox-container">
       <div className="search-bar" aria-busy={loading}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', width: '100%' }}>
-          <input
-            autoFocus
-            type="text"
-            aria-label="Task description"
-            value={taskInput}
-            onChange={(e) => setTaskInput(e.target.value)}
-            readOnly={loading}
-            placeholder={loading ? "Thinking..." : "What are you working on?"}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSubmit();
-              }
-            }}
-            style={{ flex: 1 }}
-          />
+          <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+            <input
+              ref={inputRef}
+              autoFocus
+              type="text"
+              aria-label="Task description"
+              value={taskInput}
+              onChange={(e) => setTaskInput(e.target.value)}
+              readOnly={loading}
+              placeholder={loading ? "Thinking..." : "What are you working on?"}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSubmit();
+                }
+              }}
+              style={{ width: '100%', paddingRight: '30px' }}
+            />
+            {taskInput && !loading && (
+              <button
+                className="icon-button"
+                aria-label="Clear task"
+                onClick={() => {
+                  setTaskInput("");
+                  inputRef.current?.focus();
+                }}
+                style={{
+                  position: 'absolute',
+                  right: '0',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '24px',
+                  height: '24px',
+                  padding: '4px',
+                  color: '#666',
+                  borderRadius: '50%'
+                }}
+              >
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            )}
+          </div>
           <button
             className="icon-button"
             aria-label={loading ? "Processing task" : "Submit task"}
