@@ -87,8 +87,17 @@ class InferenceDetector:
                 ]
 
                 norm_path = os.path.normcase(path)
-                # Ensure we match directory structure (check separator)
-                is_trusted = any(norm_path.startswith(root) for root in trusted_roots)
+                is_trusted = False
+
+                for root in trusted_roots:
+                    try:
+                        # Use commonpath to strictly validate that path is within root
+                        if os.path.commonpath([root, norm_path]) == root:
+                            is_trusted = True
+                            break
+                    except ValueError:
+                        # commonpath raises if drives differ
+                        continue
 
             else:
                 # Unix trusted paths
