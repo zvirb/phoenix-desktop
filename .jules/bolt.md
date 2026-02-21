@@ -9,3 +9,11 @@
 ## 2026-02-14 - Zero-Copy Screenshot Analysis
 **Learning:** `mss.grab()` returns raw bytes (`bgra`). Converting this to a PIL `Image` using `frombytes` creates a new object and copies memory, which is expensive for high-frequency checks (e.g., 1Hz). `numpy.frombuffer` allows zero-copy access to the raw bytes, enabling efficient slicing and vectorized operations for change detection without the overhead of full image creation.
 **Action:** Use `numpy.frombuffer(sct_img.bgra, dtype=np.uint8)` to analyze screenshots directly. Only convert to `PIL.Image` *after* a significant change is detected.
+
+## 2026-02-14 - Float32 vs Int for MSE
+**Learning:** While integer arithmetic avoids type conversion overhead (`astype(float32)`), modern CPU SIMD instructions often make `float32` operations faster for large array reductions (like MSE) than `int64` accumulation needed to prevent overflow. Benchmarks showed the existing `float32` implementation was faster than an optimized integer-only version for 320x240 images.
+**Action:** Measure before optimizing math operations; don't assume integers are always faster than floats for image processing.
+
+## 2026-02-14 - Subprocess vs Native Libraries
+**Learning:** Using `subprocess.run` to query system state (like `tailscale ip`) is orders of magnitude slower (~500ms vs ~0.1ms) than using native libraries (`psutil`). Even with caching, the initial hit and potential timeout hangs are significant.
+**Action:** Prioritize native libraries (`psutil`, `ctypes`) over CLI wrappers for system status checks. Use CLI only as a fallback.

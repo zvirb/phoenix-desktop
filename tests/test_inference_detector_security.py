@@ -27,9 +27,15 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
                 'Ethernet': [addr]
             }
 
-            # This should return None now
-            result = detector._detect_tailscale_ip()
-            self.assertIsNone(result, "Should not detect public IP 100.1.2.3 as Tailscale IP")
+            # This should return None now (psutil strict check fails, proceeds to subprocess)
+            # We mock subprocess to return nothing/fail to assert result is None.
+            with patch('inference_detector.subprocess.run') as mock_run:
+                mock_run.side_effect = Exception("Subprocess failed")
+
+                # Mock shutil.which to return None so subprocess isn't called
+                with patch('shutil.which', return_value=None):
+                    result = detector._detect_tailscale_ip()
+                    self.assertIsNone(result, "Should not detect public IP 100.1.2.3 as Tailscale IP")
 
     def test_cgnat_ip_detection(self):
         """Test that valid CGNAT IPs are detected."""
@@ -46,6 +52,26 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
 
             result = detector._detect_tailscale_ip()
             self.assertEqual(result, '100.64.0.1')
+
+    def test_prefer_psutil_strict_over_subprocess(self):
+        """Test that psutil strict match prevents subprocess call."""
+        detector = InferenceDetector()
+
+        with patch('psutil.net_if_addrs') as mock_net_if_addrs:
+            addr = MagicMock()
+            addr.family = socket.AF_INET
+            addr.address = '100.64.0.1'
+
+            # Strict match: Interface name contains 'tailscale'
+            mock_net_if_addrs.return_value = {
+                'tailscale0': [addr]
+            }
+
+            with patch('inference_detector.subprocess.run') as mock_run:
+                result = detector._detect_tailscale_ip()
+
+                self.assertEqual(result, '100.64.0.1')
+                mock_run.assert_not_called()
 
     def test_init_secure_host(self):
         """Test initialization with secure localhost URL."""
@@ -98,19 +124,21 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
             # Ensure cache doesn't hit
             detector.clear_cache()
 
-            ip = detector.get_tailscale_ip()
+            # Ensure psutil doesn't interfere (returns nothing)
+            with patch('psutil.net_if_addrs', return_value={}):
+                ip = detector.get_tailscale_ip()
 
-            # Verify the IP returned is correct
-            self.assertEqual(ip, "100.101.102.103")
+                # Verify the IP returned is correct
+                self.assertEqual(ip, "100.101.102.103")
 
-            # Verify the log message contains masked IP
-            found_masked = False
-            for log in cm.output:
-                if "Tailscale IP from CLI: 100.***.***.103" in log:
-                    found_masked = True
-                    break
+                # Verify the log message contains masked IP
+                found_masked = False
+                for log in cm.output:
+                    if "Tailscale IP from CLI: 100.***.***.103" in log:
+                        found_masked = True
+                        break
 
-            self.assertTrue(found_masked, f"Log message did not contain masked IP. Logs: {cm.output}")
+                self.assertTrue(found_masked, f"Log message did not contain masked IP. Logs: {cm.output}")
 
     @patch('inference_detector.subprocess.run')
     @patch('shutil.which')
@@ -128,7 +156,10 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
 
         detector = InferenceDetector()
         detector.clear_cache() # Ensure cache is cleared
-        detector.get_tailscale_ip()
+
+        # Ensure psutil returns nothing
+        with patch('psutil.net_if_addrs', return_value={}):
+            detector.get_tailscale_ip()
 
         # Verify shutil.which was called
         mock_which.assert_called_with('tailscale')
@@ -146,7 +177,9 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
 
         detector = InferenceDetector()
         detector.clear_cache()
-        detector.get_tailscale_ip()
+
+        with patch('psutil.net_if_addrs', return_value={}):
+            detector.get_tailscale_ip()
 
         # Verify subprocess.run was NOT called
         mock_run.assert_not_called()
@@ -172,7 +205,8 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
 
         # We expect a warning log about ignoring CWD
         with self.assertLogs('inference_detector', level='WARNING') as cm:
-            ip = detector.get_tailscale_ip()
+            with patch('psutil.net_if_addrs', return_value={}):
+                ip = detector.get_tailscale_ip()
 
             # Verify subprocess.run was NOT called
             mock_run.assert_not_called()
@@ -203,7 +237,8 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
         detector.clear_cache()
 
         with self.assertLogs('inference_detector', level='WARNING') as cm:
-            ip = detector.get_tailscale_ip()
+            with patch('psutil.net_if_addrs', return_value={}):
+                ip = detector.get_tailscale_ip()
 
             mock_run.assert_not_called()
             self.assertIsNone(ip)
@@ -229,7 +264,8 @@ class TestInferenceDetectorSecurity(unittest.TestCase):
         detector.clear_cache()
 
         with self.assertLogs('inference_detector', level='WARNING') as cm:
-            ip = detector.get_tailscale_ip()
+            with patch('psutil.net_if_addrs', return_value={}):
+                ip = detector.get_tailscale_ip()
 
             mock_run.assert_not_called()
             self.assertIsNone(ip)

@@ -218,7 +218,39 @@ class InferenceDetector:
         Returns:
             Tailscale IP address or None if not found.
         """
-        # Method 1: Try using tailscale CLI (most reliable)
+        fallback_candidates = []
+
+        # Optimization: Check network interfaces first (fast path)
+        # Avoids expensive subprocess call if Tailscale interface is already up and detected.
+        try:
+            import psutil
+
+            for iface_name, addrs in psutil.net_if_addrs().items():
+                for addr in addrs:
+                    if addr.family == socket.AF_INET:
+                        ip = addr.address
+                        # Strict validation of CGNAT range (100.64.0.0/10)
+                        if self._is_cgnat_ip(ip):
+                            # Strict check: only accept if interface name suggests Tailscale
+                            # This prevents false positives from other CGNAT IPs (like ISP WAN)
+                            is_preferred = "tailscale" in iface_name.lower() or "utun" in iface_name.lower()
+
+                            if is_preferred:
+                                # High confidence match - return immediately (fast path)
+                                parts = ip.split('.')
+                                masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
+                                logger.debug(f"Tailscale IP from interface (fast path): {masked}")
+                                return ip
+                            else:
+                                # Low confidence - store for fallback if CLI fails
+                                fallback_candidates.append(ip)
+
+        except ImportError:
+            logger.debug("psutil not available for network interface detection")
+        except Exception as e:
+            logger.debug(f"Network interface detection error: {e}")
+
+        # Method 2: Try using tailscale CLI (slower but authoritative)
         try:
             import shutil
             import os
@@ -278,37 +310,15 @@ class InferenceDetector:
         except Exception as e:
             logger.debug(f"Tailscale CLI error: {e}")
         
-        # Method 2: Check network interfaces for Tailscale IP range
-        try:
-            import psutil
-            candidates = []
-
-            for iface_name, addrs in psutil.net_if_addrs().items():
-                for addr in addrs:
-                    if addr.family == socket.AF_INET:
-                        ip = addr.address
-                        # Strict validation of CGNAT range (100.64.0.0/10)
-                        if self._is_cgnat_ip(ip):
-                            # Prioritize if interface name suggests Tailscale
-                            is_preferred = "tailscale" in iface_name.lower() or "utun" in iface_name.lower()
-                            if is_preferred:
-                                candidates.insert(0, ip)
-                            else:
-                                candidates.append(ip)
-
-            if candidates:
-                ip = candidates[0]
-                parts = ip.split('.')
-                masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
-                logger.debug(f"Tailscale IP from interface: {masked}")
-                return ip
-
-        except ImportError:
-            logger.debug("psutil not available for network interface detection")
-        except Exception as e:
-            logger.debug(f"Network interface detection error: {e}")
+        # Method 3: Fallback - use any candidates found in Method 1 (loose matching)
+        if fallback_candidates:
+            ip = fallback_candidates[0]
+            parts = ip.split('.')
+            masked = f"{parts[0]}.***.***.{parts[-1]}" if len(parts) == 4 else "100.***"
+            logger.debug(f"Tailscale IP from interface (fallback): {masked}")
+            return ip
         
-        # Method 3: Fallback - check socket connections
+        # Method 4: Fallback - check socket connections
         try:
             # Try to find IPs by checking all IPs on the machine
             hostname = socket.gethostname()
