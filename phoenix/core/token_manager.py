@@ -39,6 +39,41 @@ class TokenManager:
                 self._logged_warning = True
             self._init_fallback_encryption()
     
+    def _ensure_secure_permissions(self, file_path: Path) -> None:
+        """
+        Ensure file has strict permissions (0o600) on POSIX systems.
+        Raises RuntimeError if permissions cannot be secured.
+        """
+        if not file_path.exists():
+            return
+
+        # Skip on Windows as chmod/stat behavior is different and we use DPAPI there normally
+        if os.name == 'nt':
+            return
+
+        # 1. Try to set strict permissions (read/write for owner only)
+        try:
+            file_path.chmod(0o600)
+        except Exception as e:
+            # If chmod fails (e.g. not owner), we must check if it's already secure
+            logger.warning(f"Failed to chmod {file_path}: {e}")
+
+        # 2. Verify permissions
+        try:
+            # Check if group or others have any permissions
+            # st_mode & 0o077 should be 0 for 0o600 (rw-------)
+            # We explicitly want to forbid group/world access
+            st = file_path.stat()
+            if st.st_mode & 0o077:
+                raise RuntimeError(
+                    f"Insecure permissions on {file_path}: {oct(st.st_mode & 0o777)}. "
+                    "File must be accessible only by owner (0o600)."
+                )
+        except Exception as e:
+            if isinstance(e, RuntimeError):
+                raise
+            raise RuntimeError(f"Failed to verify permissions on {file_path}: {e}")
+
     def _init_fallback_encryption(self):
         """Initialize fallback encryption key."""
         key_file = Path.home() / ".phoenix_key"
@@ -48,17 +83,26 @@ class TokenManager:
             if key_file.exists():
                 try:
                     # Security: Ensure correct permissions on existing key
-                    try:
-                        key_file.chmod(0o600)
-                    except Exception:
-                        pass
+                    self._ensure_secure_permissions(key_file)
 
                     key = key_file.read_bytes()
                     if key and len(key) > 0:
                         self.encryption_key = key
                         return
-                except Exception:
-                    pass # Retry if read fails
+                except Exception as e:
+                    # If it's a security error, don't retry - fail hard?
+                    # But we are in a retry loop for race conditions.
+                    # If we can't secure it, maybe we should stop trying to read it?
+                    if "Insecure permissions" in str(e):
+                        logger.error(f"Security error reading key file: {e}")
+                        # If the file is insecure and we can't fix it, we shouldn't use it.
+                        # Break loop to force new key generation?
+                        # No, generating a new key won't help if we can't write to the same location securely.
+                        # And we can't decrypt existing data with a new key.
+                        # Raising here will crash the app start, which is "Fail Secure".
+                        raise
+
+                    pass # Retry if read fails (e.g. locked file)
             else:
                 break # File doesn't exist, proceed to creation
 
@@ -139,10 +183,7 @@ class TokenManager:
 
         # Security: Ensure correct permissions if file already exists
         if token_file.exists():
-            try:
-                token_file.chmod(0o600)
-            except Exception:
-                pass
+            self._ensure_secure_permissions(token_file)
 
         # Security: Use os.open to atomically create file with 0600 permissions
         fd = os.open(str(token_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)

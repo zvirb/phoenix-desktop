@@ -58,3 +58,8 @@
 **Vulnerability:** The `TokenManager` created sensitive files (encryption key and token) with default permissions (readable by others) and then restricted them with `chmod`, leaving a race condition window where the file was world-readable.
 **Learning:** File creation and permission setting must be atomic to prevent race conditions.
 **Prevention:** Use `os.open` with `O_CREAT | O_WRONLY | O_TRUNC` and the desired mode (e.g., `0o600`) to set permissions at the moment of creation.
+
+## 2026-10-31 - Insecure Permission Fix Bypass
+**Vulnerability:** `TokenManager` attempted to fix insecure file permissions using `chmod` but silently ignored any failures, potentially leaving sensitive files world-readable if the operation failed (e.g. on certain filesystems or due to ownership issues).
+**Learning:** Security controls like `chmod` must fail securely; if the security posture cannot be established, the operation should abort rather than proceeding insecurely.
+**Prevention:** Always verify the resulting file permissions using `stat` after attempting to secure a file, and raise an exception if strict permissions cannot be guaranteed.
