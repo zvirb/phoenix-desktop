@@ -51,3 +51,11 @@
 ## 2027-08-14 - Input Clearing Mechanisms
 **Learning:** In search-heavy interfaces, users frequently need to clear their input to start over. Relying solely on backspace is tedious, especially for mouse users. A dedicated "Clear" button that appears when text is present is a standard expectation that improves flow.
 **Action:** For main search or task inputs, always include a conditionally rendered "Clear" button inside the input container that resets the value and returns focus to the input.
+
+## 2027-09-02 - Linking Helper Text
+**Learning:** Placing helper text (e.g., "Stored in Windows Registry") visually near an input isn't enough for screen readers. They may miss the context entirely if it's read after the input.
+**Action:** Always use `aria-describedby` to programmatically link helper text to its corresponding input, ensuring the description is announced when the input receives focus.
+
+## 2027-09-02 - Respecting Motion Preferences
+**Learning:** Purely decorative animations (like pulsing badges) can trigger vestibular disorders. Users who enable "Reduce Motion" expect these to stop, not just slow down.
+**Action:** Always include a `@media (prefers-reduced-motion: reduce)` block that sets `animation: none` for decorative elements, ensuring the interface remains accessible to all users.
