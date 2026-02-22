@@ -127,7 +127,9 @@ class ActivityDetector:
             img2_f = img2.astype(np.float32, copy=False)
 
             diff = img1_f - img2_f
-            err = np.sum(diff * diff)
+            # In-place squaring to avoid allocating a new array for the square result
+            np.square(diff, out=diff)
+            err = np.sum(diff)
             err /= float(img1.shape[0] * img1.shape[1])
             
             # Max possible error for 8-bit images is 255^2

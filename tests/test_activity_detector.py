@@ -2,6 +2,8 @@ import sys
 import unittest
 from unittest.mock import MagicMock
 import os
+import numpy as np
+from PIL import Image
 
 # Mock winreg before importing anything else
 sys.modules['winreg'] = MagicMock()
@@ -10,12 +12,14 @@ sys.modules['winshell'] = MagicMock()
 # Also mock mss because it might try to load platform specific things
 sys.modules['mss'] = MagicMock()
 
+# Patch windows_settings to avoid actual registry calls
+sys.modules['windows_settings'] = MagicMock()
+sys.modules['windows_settings'].settings_manager = MagicMock()
+
 # Ensure we can import from phoenix root
 sys.path.append(os.getcwd())
 
 from phoenix.core.activity_detector import ActivityDetector
-import numpy as np
-from PIL import Image
 
 class TestActivityDetector(unittest.TestCase):
     def setUp(self):
@@ -23,41 +27,52 @@ class TestActivityDetector(unittest.TestCase):
 
     def test_identical_images(self):
         # Create two identical images
-        img1 = Image.new('RGB', (100, 100), color='white')
-        img2 = Image.new('RGB', (100, 100), color='white')
+        # Use RGB tuple instead of color string for compatibility
+        img1 = Image.new('RGB', (100, 100), color=(255, 255, 255))
+        img2 = Image.new('RGB', (100, 100), color=(255, 255, 255))
 
         # First call sets baseline, returns True (initially)
         self.assertTrue(self.detector.has_significant_change(img1))
 
         # Second call should find no change (high similarity)
+        # 1.0 similarity > 0.95 threshold -> No change
         self.assertFalse(self.detector.has_significant_change(img2))
 
     def test_different_images(self):
-        img1 = Image.new('RGB', (100, 100), color='white')
-        img2 = Image.new('RGB', (100, 100), color='black')
+        img1 = Image.new('RGB', (100, 100), color=(255, 255, 255))
+        # Use different color (black)
+        img2 = Image.new('RGB', (100, 100), color=(0, 0, 0))
 
-        self.detector.has_significant_change(img1)
+        # First call baseline
+        self.assertTrue(self.detector.has_significant_change(img1))
+
+        # Second call should find change
+        # Similarity approx 0 < 0.95 -> Change
         self.assertTrue(self.detector.has_significant_change(img2))
 
     def test_mse_calculation_logic(self):
-        # Direct test of _calculate_similarity_mse to verify the math
-        # Create random float32 arrays
-        arr1 = np.ones((10, 10), dtype=np.float32) * 100
-        arr2 = np.ones((10, 10), dtype=np.float32) * 100
+        """Direct test of _calculate_similarity_mse to verify the math."""
+        # Create float32 arrays
+        h, w = 10, 10
+        # Identical arrays
+        arr1 = np.ones((h, w), dtype=np.float32) * 100
+        arr2 = np.ones((h, w), dtype=np.float32) * 100
 
+        # Note: _calculate_similarity_mse expects float32
         sim = self.detector._calculate_similarity_mse(arr1, arr2)
         self.assertEqual(sim, 1.0)
 
-        # Max difference
-        arr3 = np.zeros((10, 10), dtype=np.float32)
-        arr4 = np.ones((10, 10), dtype=np.float32) * 255
+        # Max difference (0 vs 255)
+        arr3 = np.zeros((h, w), dtype=np.float32)
+        arr4 = np.ones((h, w), dtype=np.float32) * 255
 
         sim = self.detector._calculate_similarity_mse(arr3, arr4)
+        # Should be near 0.0
         self.assertAlmostEqual(sim, 0.0, places=4)
 
     def test_mss_object_support(self):
         """Test the fast path for mss-like screenshot objects."""
-        # Mock mss.tools.ScreenShot
+        # Mock mss.tools.ScreenShot (duck typing)
         class MockScreenShot:
             def __init__(self, bgra, size):
                 self.bgra = bgra
@@ -66,6 +81,7 @@ class TestActivityDetector(unittest.TestCase):
 
         width, height = 320, 240
         # White image (BGRA: 255, 255, 255, 255)
+        # 4 bytes per pixel * width * height
         white_pixel = b'\xff\xff\xff\xff'
         bgra_white = white_pixel * (width * height)
 
