@@ -422,7 +422,14 @@ function App() {
             <div className="setting-item">
               <label htmlFor="settings-api-url">API URL</label>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input id="settings-api-url" type="text" value={apiUrl} readOnly style={{ flex: 1, padding: 8, background: '#333', border: 'none', color: '#fff', borderRadius: '4px' }} />
+                <input
+                  id="settings-api-url"
+                  aria-describedby="settings-api-url-help"
+                  type="text"
+                  value={apiUrl}
+                  readOnly
+                  style={{ flex: 1, padding: 8, background: '#333', border: 'none', color: '#fff', borderRadius: '4px' }}
+                />
                 <button
                   className="icon-button"
                   aria-label={copiedField === 'api-url' ? "Copied API URL" : "Copy API URL"}
@@ -442,13 +449,20 @@ function App() {
                   )}
                 </button>
               </div>
-              <small>Defined in Windows Registry</small>
+              <small id="settings-api-url-help">Defined in Windows Registry</small>
             </div>
 
             <div className="setting-item">
               <label htmlFor="settings-device-token">Device Token (Masked)</label>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input id="settings-device-token" type="text" value={token ? `${token.substring(0, 8)}...` : "Not Loaded"} readOnly style={{ flex: 1, padding: 8, background: '#333', border: 'none', color: '#fff', borderRadius: '4px' }} />
+                <input
+                  id="settings-device-token"
+                  aria-describedby="settings-device-token-help"
+                  type="text"
+                  value={token ? `${token.substring(0, 8)}...` : "Not Loaded"}
+                  readOnly
+                  style={{ flex: 1, padding: 8, background: '#333', border: 'none', color: '#fff', borderRadius: '4px' }}
+                />
                 <button
                   className="icon-button"
                   aria-label={copiedField === 'token' ? "Copied Device Token" : "Copy Device Token"}
@@ -469,12 +483,16 @@ function App() {
                   )}
                 </button>
               </div>
-              <small>Stored in Windows Credential Manager</small>
+              <small id="settings-device-token-help">Stored in Windows Credential Manager</small>
             </div>
 
             <div className="setting-item">
               <label>Status</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div
+                role="status"
+                aria-live="polite"
+                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+              >
                 <div style={{
                   width: 8, height: 8, borderRadius: '50%',
                   background: getStatusColor(status),

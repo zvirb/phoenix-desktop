@@ -268,7 +268,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .subtasks-card { animation: none; }
+  .subtasks-card, .agent-badge, .settings-backdrop, .settings-modal { animation: none; }
 }
 
 /* Accessibility & Button Styles */
