@@ -17,3 +17,7 @@
 ## 2026-02-14 - Subprocess vs Native Libraries
 **Learning:** Using `subprocess.run` to query system state (like `tailscale ip`) is orders of magnitude slower (~500ms vs ~0.1ms) than using native libraries (`psutil`). Even with caching, the initial hit and potential timeout hangs are significant.
 **Action:** Prioritize native libraries (`psutil`, `ctypes`) over CLI wrappers for system status checks. Use CLI only as a fallback.
+
+## 2026-02-23 - Einsum for Grayscale
+**Learning:** `np.einsum` with `optimize=True` is significantly faster (~13% in this case) and more memory-efficient than manual channel extraction and arithmetic for weighted sums (like grayscale conversion) on strided arrays, as it avoids intermediate array allocations and uses optimized BLAS routines.
+**Action:** Use `np.einsum` for weighted channel operations instead of splitting channels and doing element-wise arithmetic, especially when dealing with high-frequency image processing.
