@@ -53,6 +53,19 @@ body {
   box-shadow: 0 0 0 1px #4ade80;
 }
 
+/* Pulse animation for busy state */
+.search-bar[aria-busy="true"] {
+  border-color: #4ade80;
+  box-shadow: 0 0 0 1px #4ade80;
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 1px #4ade80, 0 0 0 0 rgba(74, 222, 128, 0.4); }
+  70% { box-shadow: 0 0 0 1px #4ade80, 0 0 0 6px rgba(74, 222, 128, 0); }
+  100% { box-shadow: 0 0 0 1px #4ade80, 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
 .search-bar input {
   background: transparent;
   border: none;
@@ -268,7 +281,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .subtasks-card, .agent-badge, .settings-backdrop, .settings-modal { animation: none; }
+  .subtasks-card, .agent-badge, .settings-backdrop, .settings-modal, .search-bar[aria-busy="true"] { animation: none; }
 }
 
 /* Accessibility & Button Styles */

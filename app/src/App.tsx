@@ -247,6 +247,7 @@ function App() {
               <button
                 className="icon-button"
                 aria-label="Clear task"
+                title="Clear task"
                 onClick={() => {
                   setTaskInput("");
                   inputRef.current?.focus();
