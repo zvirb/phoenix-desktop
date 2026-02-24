@@ -368,10 +368,31 @@ function App() {
         </div>
       </div>
 
-      <div className="debug-logs">
-        {logs.map((log, i) => (
-          <div key={i} className="log-entry">{log}</div>
-        ))}
+      <div className="logs-container">
+        <div className="logs-header">
+          <span className="logs-title">Activity Log</span>
+          <button
+            className="icon-button logs-clear-btn"
+            aria-label="Clear activity log"
+            title="Clear activity log"
+            onClick={() => setLogs([])}
+          >
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+        <div
+          className="debug-logs"
+          role="log"
+          aria-label="Activity Log"
+          tabIndex={0}
+        >
+          {logs.map((log, i) => (
+            <div key={i} className="log-entry">{log}</div>
+          ))}
+        </div>
       </div>
 
       {/* Settings Panel */}
