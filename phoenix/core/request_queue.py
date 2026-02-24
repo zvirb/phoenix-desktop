@@ -187,6 +187,17 @@ class RequestQueue:
     def _init_db(self):
         """Initialize the database schema."""
         try:
+            # Security: Pre-create DB file with strict permissions to avoid race condition
+            if not self.db_path.exists() and os.name != 'nt':
+                try:
+                    # Atomic creation with 0600 permissions
+                    fd = os.open(str(self.db_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                    os.close(fd)
+                except FileExistsError:
+                    pass  # Created concurrently by another process
+                except Exception as e:
+                    logger.warning(f"Failed to pre-create DB with secure permissions: {e}")
+
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("""
                     CREATE TABLE IF NOT EXISTS request_queue (
