@@ -63,3 +63,8 @@
 **Vulnerability:** `TokenManager` attempted to fix insecure file permissions using `chmod` but silently ignored any failures, potentially leaving sensitive files world-readable if the operation failed (e.g. on certain filesystems or due to ownership issues).
 **Learning:** Security controls like `chmod` must fail securely; if the security posture cannot be established, the operation should abort rather than proceeding insecurely.
 **Prevention:** Always verify the resulting file permissions using `stat` after attempting to secure a file, and raise an exception if strict permissions cannot be guaranteed.
+
+## 2026-10-31 - SQLite Database Creation Race Condition
+**Vulnerability:** `sqlite3.connect` creates database files with default process permissions (usually 0o644), making sensitive data readable by other users before `chmod` can be applied.
+**Learning:** High-level library functions (like `sqlite3.connect`) often prioritize convenience over secure file creation.
+**Prevention:** Pre-create sensitive database files using `os.open` with `0o600` permissions (on POSIX) before initializing the database connection.
