@@ -34,6 +34,10 @@ class RequestQueue:
         self._init_encryption()
         self._init_db()
         
+        # Optimization: Cache count to avoid DB queries on every heartbeat
+        self._lock = threading.Lock()
+        self._count_cache = self._get_db_count()
+
     def _ensure_secure_permissions(self, file_path: Path) -> None:
         """
         Ensure file has strict permissions (0o600) on POSIX systems.
@@ -235,6 +239,10 @@ class RequestQueue:
             """, (endpoint, method, encrypted_data, None, priority))
             
             conn.commit()
+
+            with self._lock:
+                self._count_cache += 1
+
             logger.info(f"Queued request to {endpoint} (Priority: {priority})")
             return True
         except Exception as e:
@@ -268,13 +276,22 @@ class RequestQueue:
         """Remove a request from the queue (after successful processing)."""
         try:
             conn = self._get_conn()
-            conn.execute("DELETE FROM request_queue WHERE id = ?", (request_id,))
+            cursor = conn.execute("DELETE FROM request_queue WHERE id = ?", (request_id,))
             conn.commit()
+
+            if cursor.rowcount > 0:
+                with self._lock:
+                    self._count_cache = max(0, self._count_cache - 1)
+
         except Exception as e:
             logger.error(f"Failed to pop request {request_id}: {e}")
 
     def count(self) -> int:
-        """Get usage stats."""
+        """Get pending request count (cached)."""
+        return self._count_cache
+
+    def _get_db_count(self) -> int:
+        """Get actual count from DB."""
         try:
             conn = self._get_conn()
             cursor = conn.cursor()
