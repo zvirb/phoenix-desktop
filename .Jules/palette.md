@@ -59,3 +59,7 @@
 ## 2027-09-02 - Respecting Motion Preferences
 **Learning:** Purely decorative animations (like pulsing badges) can trigger vestibular disorders. Users who enable "Reduce Motion" expect these to stop, not just slow down.
 **Action:** Always include a `@media (prefers-reduced-motion: reduce)` block that sets `animation: none` for decorative elements, ensuring the interface remains accessible to all users.
+
+## 2027-10-15 - Accessible Log Views
+**Learning:** Debug logs are often treated as "noise" and dimmed (low opacity), which destroys accessibility. Users with low vision cannot read them, and screen readers get a jumble of divs.
+**Action:** For log regions, always use `role="log"`, ensure valid contrast (avoid opacity on text), and provide a "Clear" action to manage the noise.
